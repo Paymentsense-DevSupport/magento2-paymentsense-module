@@ -1,0 +1,180 @@
+<?php
+/*
+ * Copyright (C) 2018 Paymentsense Ltd.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 3
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * @author      Paymentsense
+ * @copyright   2018 Paymentsense Ltd.
+ * @license     https://www.gnu.org/licenses/gpl-3.0.html
+ */
+
+namespace Paymentsense\Payments\Controller\Direct;
+
+use Paymentsense\Payments\Controller\Action;
+use Paymentsense\Payments\Model\Method\Direct;
+use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
+
+/**
+ * Front Controller for Paymentsense Direct method
+ *
+ * @package Paymentsense\Payments\Controller\Direct
+ */
+class Index extends \Paymentsense\Payments\Controller\CheckoutAction
+{
+    /**
+     * @var \Magento\Framework\View\Result\PageFactory
+     */
+    private $_resultPageFactory;
+
+    /**
+     * @param \Magento\Framework\App\Action\Context $context
+     * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Magento\Checkout\Model\Session $checkoutSession
+     * @param \Magento\Sales\Model\OrderFactory $orderFactory
+     */
+    public function __construct(
+        \Magento\Framework\App\Action\Context $context,
+        \Magento\Framework\View\Result\PageFactory $resultPageFactory,
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Checkout\Model\Session $checkoutSession,
+        \Magento\Sales\Model\OrderFactory $orderFactory
+    ) {
+        $this->_resultPageFactory = $resultPageFactory;
+        parent::__construct($context, $logger, $checkoutSession, $orderFactory);
+    }
+
+    /**
+     * Handles the new orders placed
+     *
+     * @return null|\Magento\Framework\View\Result\Page
+     */
+    public function execute()
+    {
+        $result = null;
+        switch ($this->getReturnAction()) {
+            case self::ACSRESPONSE:
+                $this->processAcsResponse();
+                break;
+            case self::THREEDSCOMPLETE:
+                $this->process3dsComplete();
+                break;
+            case self::THREEDSERROR:
+                $this->process3dsError();
+                break;
+            case self::THREEDSCANCEL:
+                $this->process3dsCancel();
+                break;
+            default:
+                $result = $this->processCardDetailsTxnReturn();
+        }
+        return $result;
+    }
+
+    /**
+     * Performs redirection to the ACS (Access Control Server)
+     *
+     * @return \Magento\Framework\View\Result\Page
+     */
+    private function performAcsRedirect()
+    {
+        $resultPage = $this->_resultPageFactory->create();
+        $resultPage->addHandle('acs_request');
+        return $resultPage;
+    }
+
+    /**
+     * Processes the response from the ACS (Access Control Server)
+     */
+    private function processAcsResponse()
+    {
+        $postData = $this->getPostData();
+        $direct = $this->getObjectManager()->create(Direct::class);
+        $order = $this->getOrder();
+        if (isset($order)) {
+            $action = Action::THREEDSCOMPLETE;
+            $message = $direct->process3dsResponse($order, $postData);
+            $this->getCheckoutSession()->setPaymentsense3dsResponseMessage($message);
+        } else {
+            $action = Action::THREEDSERROR;
+        }
+        $link = $direct->getModuleHelper()->getUrlBuilder()->getUrl('paymentsense/direct', ['action' => $action]);
+        $html='<html><head><script>window.top.location.href = "' . $link . '";</script></head></html>';
+        $this->getResponse()->setBody($html);
+        $this->getCheckoutSession()->setPaymentsenseAcsUrl(null);
+    }
+
+    /**
+     * Performs redirection based on the response from the ACS (Access Control Server)
+     */
+    private function process3dsComplete()
+    {
+        $message = $this->getCheckoutSession()->getPaymentsense3dsResponseMessage();
+        if ($message == '') {
+            $this->executeSuccessAction();
+        } else {
+            $this->executeFailureAction($message);
+        }
+        $this->getCheckoutSession()->setPaymentsense3dsResponseMessage(null);
+    }
+
+    /**
+     * Processes the errors appeared during the 3D Secure authentication
+     */
+    private function process3dsError()
+    {
+        $direct = $this->getObjectManager()->create(\Paymentsense\Payments\Model\Method\Direct::class);
+        $message = "A 3-D Secure authentication error occurred while processing the order";
+        $order = $this->getOrder();
+        if (isset($order)) {
+            $direct->getModuleHelper()->setOrderState($order, TransactionResultCode::FAILED, $message);
+        }
+        $this->executeCancelAction($message);
+    }
+
+    /**
+     * Processes the cancellation during the 3D Secure authentication
+     */
+    private function process3dsCancel()
+    {
+        $direct = $this->getObjectManager()->create(\Paymentsense\Payments\Model\Method\Direct::class);
+        $message = "Customer cancelled the order at the 3-D Secure authentication";
+        $order = $this->getOrder();
+        if (isset($order)) {
+            $direct->getModuleHelper()->setOrderState($order, TransactionResultCode::FAILED, $message);
+        }
+        $this->executeCancelAction($message);
+    }
+
+    /**
+     * Handles the return action after processing the Card Details Transaction.
+     * If the card is enrolled in a 3-D Secure scheme a redirect to the ACS will be made
+     *
+     * @return null|\Magento\Framework\View\Result\Page
+     */
+    private function processCardDetailsTxnReturn()
+    {
+        $result = null;
+        $order = $this->getOrder();
+        if (isset($order)) {
+            $acsUrl = $this->getCheckoutSession()->getPaymentsenseAcsUrl();
+            if (isset($acsUrl)) {
+                $result = $this->performAcsRedirect();
+            } else {
+                $this->redirectToCheckoutOnePageSuccess();
+            }
+        } else {
+            $this->executeCancelAction('An error occurred. Order not found.');
+        }
+        return $result;
+    }
+}

@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!--
+Copyright (C) 2018 Paymentsense Ltd.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+@author      Paymentsense
+@copyright   2018 Paymentsense Ltd.
+@license     https://www.gnu.org/licenses/gpl-3.0.html
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <default>
+        <payment>
+            <paymentsense_hosted>
+                <active>0</active>
+                <model>Paymentsense\Payments\Model\Method\Hosted</model>
+                <order_status>payment_review</order_status>
+                <title>Paymentsense Hosted</title>
+                <hash_method>SHA1</hash_method>
+                <transaction_type>SALE</transaction_type>
+                <email_address_editable>0</email_address_editable>
+                <phone_number_editable>0</phone_number_editable>
+                <address1_mandatory>1</address1_mandatory>
+                <city_mandatory>0</city_mandatory>
+                <state_mandatory>0</state_mandatory>
+                <postcode_mandatory>1</postcode_mandatory>
+                <country_mandatory>0</country_mandatory>
+                <allowspecific>0</allowspecific>
+                <allow_specific_currency>0</allow_specific_currency>
+                <group>paymentsense</group>
+            </paymentsense_hosted>
+            <paymentsense_direct>
+                <active>0</active>
+                <model>Paymentsense\Payments\Model\Method\Direct</model>
+                <order_status>payment_review</order_status>
+                <title>Paymentsense Direct</title>
+                <transaction_type>SALE</transaction_type>
+                <allowspecific>0</allowspecific>
+                <allow_specific_currency>0</allow_specific_currency>
+                <cctypes>AE,VI,MC,MI</cctypes>
+                <useccv>1</useccv>
+                <group>paymentsense</group>
+            </paymentsense_direct>
+            <paymentsense_moto>
+                <active>0</active>
+                <model>Paymentsense\Payments\Model\Method\Moto</model>
+                <order_status>payment_review</order_status>
+                <title>Paymentsense MOTO</title>
+                <transaction_type>SALE</transaction_type>
+                <allowspecific>0</allowspecific>
+                <allow_specific_currency>0</allow_specific_currency>
+                <cctypes>AE,VI,MC,MI</cctypes>
+                <useccv>1</useccv>
+                <group>paymentsense</group>
+            </paymentsense_moto>
+        </payment>
+    </default>
+</config>

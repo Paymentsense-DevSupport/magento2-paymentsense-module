@@ -1,0 +1,43 @@
+<?php
+/*
+ * Copyright (C) 2018 Paymentsense Ltd.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 3
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * @author      Paymentsense
+ * @copyright   2018 Paymentsense Ltd.
+ * @license     https://www.gnu.org/licenses/gpl-3.0.html
+ */
+
+namespace Paymentsense\Payments\Model\Config;
+
+/**
+ * Hash Methods Model Source
+ *
+ * @package Paymentsense\Payments\Model\Config
+ */
+class HashMethods implements \Magento\Framework\Option\ArrayInterface
+{
+    /**
+     * Builds the options for the select control in the admin panel
+     *
+     * @return array
+     */
+    public function toOptionArray()
+    {
+        return [
+            ['value' => 'SHA1', 'label' => 'SHA1'],
+            ['value' => 'MD5', 'label' => 'MD5'],
+            ['value' => 'HMACSHA1', 'label' => 'HMACSHA1'],
+            ['value' => 'HMACMD5', 'label' => 'HMACMD5']
+        ];
+    }
+}

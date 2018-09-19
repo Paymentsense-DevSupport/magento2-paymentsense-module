@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!--
+Copyright (C) 2018 Paymentsense Ltd.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+@author      Paymentsense
+@copyright   2018 Paymentsense Ltd.
+@license     https://www.gnu.org/licenses/gpl-3.0.html
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="payment">
+            <group id="paymentsense_payments_init" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <frontend_model>Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset\Init</frontend_model>
+            </group>
+            <group id="paymentsense_payments" translate="label comment" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Paymentsense</label>
+                <fieldset_css>complex paymentsense-section</fieldset_css>
+                <comment>Accept payments through Paymentsense</comment>
+                <include path="Paymentsense_Payments::system/paymentsense_hosted.xml"/>
+                <include path="Paymentsense_Payments::system/paymentsense_direct.xml"/>
+                <include path="Paymentsense_Payments::system/paymentsense_moto.xml"/>
+                <attribute type="displayIn">recommended_solutions</attribute>
+            </group>
+        </section>
+    </system>
+</config>
