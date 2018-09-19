@@ -21,7 +21,10 @@ namespace Paymentsense\Payments\Model\Method;
 
 use Paymentsense\Payments\Model\Psgw\GatewayEndpoints;
 use Paymentsense\Payments\Model\Psgw\DataBuilder;
+use Paymentsense\Payments\Model\Psgw\TransactionStatus;
+use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 use Paymentsense\Payments\Model\Traits\BaseMethod;
+use Magento\Sales\Model\Order;
 
 /**
  * Hosted payment method model
@@ -34,19 +37,19 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
 
     const CODE = 'paymentsense_hosted';
 
-    protected $_code = self::CODE;
-    protected $_canOrder                    = true;
-    protected $_isGateway                   = true;
-    protected $_canCapture                  = true;
-    protected $_canCapturePartial           = false;
-    protected $_canRefund                   = true;
-    protected $_canCancelInvoice            = true;
-    protected $_canVoid                     = true;
-    protected $_canRefundInvoicePartial     = true;
-    protected $_canAuthorize                = true;
-    protected $_isInitializeNeeded          = false;
-    protected $_canUseCheckout              = true;
-    protected $_canUseInternal              = false;
+    protected $_code                    = self::CODE;
+    protected $_canOrder                = true;
+    protected $_isGateway               = true;
+    protected $_canCapture              = true;
+    protected $_canCapturePartial       = false;
+    protected $_canRefund               = true;
+    protected $_canCancelInvoice        = true;
+    protected $_canVoid                 = true;
+    protected $_canRefundInvoicePartial = true;
+    protected $_canAuthorize            = true;
+    protected $_isInitializeNeeded      = false;
+    protected $_canUseCheckout          = true;
+    protected $_canUseInternal          = false;
 
     /**
      * @param \Magento\Framework\Model\Context $context
@@ -103,7 +106,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
      *
      * @return \Psr\Log\LoggerInterface
      */
-    protected function getLogger()
+    public function getLogger()
     {
         return $this->logger->getLogger();
     }
@@ -130,12 +133,31 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
     }
 
     /**
+     * Order Payment
+     *
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param float $amount
+     * @return $this
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function order(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    {
+        $this->getLogger()->info('ACTION_ORDER has been triggered.');
+        $order = $payment->getOrder();
+        $order->setState(Order::STATE_NEW);
+        $orderId = $order->getRealOrderId();
+        $this->getLogger()->info('New order #' . $orderId . ' with amount ' . $amount . ' has been created.');
+        return $this;
+    }
+
+    /**
      * Builds the redirect form action URL and the variables for the Hosted Payment Form
      *
      * @param  \Magento\Sales\Model\Order $order
      * @return array
      */
-    public function buildFormData($order)
+    public function buildHostedFormData($order)
     {
         $billingAddress = $order->getBillingAddress();
         $config = $this->getConfigHelper();
@@ -172,9 +194,12 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
             'PaymentFormDisplaysResult' => 'false'
         ];
 
-        $fields = array_map(function ($value) {
-            return $value === null ? '' : $value;
-        }, $fields);
+        $fields = array_map(
+            function ($value) {
+                return $value === null ? '' : $value;
+            },
+            $fields
+        );
 
         $data  = 'MerchantID=' . $config->getMerchantId();
         $data .= '&Password=' . $config->getPassword();
@@ -190,12 +215,124 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
 
         $fields = array_merge($additionalFields, $fields);
 
-        $this->getLogger()->debug($this->getConfigTransactionType() . ' transaction for order #' . $orderId);
+        $this->getLogger()->info(
+            'Preparing Hosted Payment Form redirect with ' . $config->getTransactionType() .
+            ' transaction for order #' . $orderId
+        );
+
+        $this->getModuleHelper()->setOrderStatusByState($order, Order::STATE_PENDING_PAYMENT);
+        $order->save();
 
         return [
             'url'      => GatewayEndpoints::getPaymentFormUrl(),
             'elements' => $fields
         ];
+    }
+
+    /**
+     * Gets the transaction status and message received by the Hosted Payment Form
+     *
+     * @param array $postData The POST variables received by the Hosted Payment Form
+     * @return array
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
+    // phpcs:ignore Generic.Metrics.CyclomaticComplexity
+    public function getTrxStatusAndMessage($postData)
+    {
+        $message   = '';
+        $trxStatus = TransactionStatus::INVALID;
+        if ($this->isHashDigestValid($postData)) {
+            $message = $postData['Message'];
+            switch ($postData['StatusCode']) {
+                case TransactionResultCode::SUCCESS:
+                    $trxStatus = TransactionStatus::SUCCESS;
+                    break;
+                case TransactionResultCode::DUPLICATE:
+                    if (TransactionResultCode::SUCCESS === $postData['PreviousStatusCode']) {
+                        if (array_key_exists('PreviousMessage', $postData)) {
+                            $message = $postData['PreviousMessage'];
+                        }
+                        $trxStatus = TransactionStatus::SUCCESS;
+                    } else {
+                        $trxStatus = TransactionStatus::FAILED;
+                    }
+                    break;
+                case TransactionResultCode::REFERRED:
+                case TransactionResultCode::DECLINED:
+                case TransactionResultCode::FAILED:
+                    $trxStatus = TransactionStatus::FAILED;
+                    break;
+            }
+            $order = $this->getOrder($postData);
+            if ($order) {
+                $this->getLogger()->info(
+                    'Card details transaction ' . $postData['CrossReference'] .
+                    ' has been performed with status code "' . $postData['StatusCode'] . '".'
+                );
+
+                $this->updatePayment($order, $postData);
+            }
+        } else {
+            $this->getLogger()->warning('Callback request with invalid hash digest has been received.');
+        }
+
+        return [
+            'TrxStatus' => $trxStatus,
+            'Message'   => $message
+        ];
+    }
+
+    /**
+     * Gets Sales Order
+     *
+     * @param array $response An array containing transaction response data from the gateway
+     * @return \Magento\Sales\Model\Order $order
+     */
+    public function getOrder($response)
+    {
+        $result         = null;
+        $orderId        = null;
+        $gatewayOrderId = null;
+        $sessionOrderId = $this->getCheckoutSession()->getLastRealOrderId();
+        if (array_key_exists('OrderID', $response)) {
+            $gatewayOrderId = $response['OrderID'];
+        }
+
+        switch (true) {
+            case empty($gatewayOrderId):
+                $this->getLogger()->error('OrderID returned by the gateway is empty.');
+                break;
+            case empty($sessionOrderId):
+                $this->getLogger()->warning(
+                    'Session OrderID is empty. OrderID returned by the gateway (' . $gatewayOrderId .
+                    ') will be used.'
+                );
+                $orderId = $gatewayOrderId;
+                break;
+            case $sessionOrderId !== $gatewayOrderId:
+                $this->getLogger()->error(
+                    'Session OrderID (' . $sessionOrderId . ') differs from the OrderID (' . $gatewayOrderId .
+                    ') returned by the gateway.'
+                );
+                break;
+            default:
+                $orderId = $gatewayOrderId;
+                break;
+        }
+
+        if ($orderId) {
+            $objectManager = $this->getModuleHelper()->getObjectManager();
+            $orderObj      = $objectManager->create(Order::class);
+            $order         = $orderObj->loadByIncrementId($orderId);
+            if ($order) {
+                if ($order->getId()) {
+                    $result = $order;
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -210,7 +347,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
     public function calculateHashDigest($data, $hashMethod, $key)
     {
         $result     = '';
-        $includeKey = in_array($hashMethod, [ 'MD5', 'SHA1' ], true);
+        $includeKey = in_array($hashMethod, ['MD5', 'SHA1'], true);
         if ($includeKey) {
             $data = 'PreSharedKey=' . $key . '&' . $data;
         }

@@ -124,35 +124,15 @@ GNU General Public License for more details.
             </depends>
             <can_be_empty>0</can_be_empty>
         </field>
-
-
-        <!--field id="min_order_total" translate="label" type="text" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
-            <label>Minimum Order Total</label>
-            <config_path>payment/paymentsense_moto/min_order_total</config_path>
-            <validate>validate-zero-or-greater</validate>
-            <can_be_empty>1</can_be_empty>
+        <field id="log_level" translate="label" type="select" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
+            <label>Log Level</label>
+            <config_path>payment/paymentsense_moto/log_level</config_path>
+            <source_model>Paymentsense\Payments\Model\Config\LogLevel</source_model>
+            <validate>required-entry</validate>
             <depends>
                 <field id="active">1</field>
             </depends>
+            <can_be_empty>0</can_be_empty>
         </field>
-        <field id="max_order_total" translate="label" type="text" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
-            <label>Maximum Order Total</label>
-            <config_path>payment/paymentsense_moto/max_order_total</config_path>
-            <validate>validate-zero-or-greater</validate>
-            <can_be_empty>1</can_be_empty>
-            <depends>
-                <field id="active">1</field>
-            </depends>
-        </field>
-        <field id="sort_order" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
-            <label>Sort Order</label>
-            <config_path>payment/paymentsense_moto/sort_order</config_path>
-            <frontend_class>validate-number</frontend_class>
-            <validate>validate-zero-or-greater</validate>
-            <can_be_empty>1</can_be_empty>
-            <depends>
-                <field id="active">1</field>
-            </depends>
-        </field-->
     </group>
 </include>

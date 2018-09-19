@@ -46,17 +46,7 @@ trait BaseMethod
      */
     public function createLogger()
     {
-        return new Logger($this->getCode());
-    }
-
-    /**
-     * Retrieves the Transaction Type
-     *
-     * @return string
-     */
-    public function getConfigTransactionType()
-    {
-        return $this->getConfigData('transaction_type');
+        return new Logger($this);
     }
 
     /**

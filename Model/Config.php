@@ -367,4 +367,14 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
             )
         );
     }
+
+    /**
+     * Gets Log Level
+     *
+     * @return int
+     */
+    public function getLogLevel()
+    {
+        return (int) $this->getValue('log_level');
+    }
 }

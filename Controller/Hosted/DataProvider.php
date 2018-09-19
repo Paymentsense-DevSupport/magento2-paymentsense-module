@@ -19,8 +19,6 @@
 
 namespace Paymentsense\Payments\Controller\Hosted;
 
-use Paymentsense\Payments\Model\Method\Hosted;
-
 /**
  * Provides data for the form redirecting to the Hosted Payment Form
  *
@@ -29,6 +27,25 @@ use Paymentsense\Payments\Model\Method\Hosted;
 class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
 {
     /**
+     * @param \Magento\Framework\App\Action\Context $context
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Magento\Checkout\Model\Session $checkoutSession
+     * @param \Magento\Sales\Model\OrderFactory $orderFactory
+     * @param \Paymentsense\Payments\Model\Method\Hosted
+     */
+    // @codingStandardsIgnoreStart
+    public function __construct(
+        \Magento\Framework\App\Action\Context $context,
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Checkout\Model\Session $checkoutSession,
+        \Magento\Sales\Model\OrderFactory $orderFactory,
+        \Paymentsense\Payments\Model\Method\Hosted $method
+    ) {
+        parent::__construct($context, $logger, $checkoutSession, $orderFactory, $method);
+    }
+    // @codingStandardsIgnoreEnd
+
+    /**
      * Handles ajax requests and provides the form data for redirecting to the Hosted Payment Form
      * Generates application/json response containing the form data in JSON format
      */
@@ -36,8 +53,7 @@ class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
     {
         $order = $this->getOrder();
         if (isset($order)) {
-            $hosted = $this->getObjectManager()->create(Hosted::class);
-            $data = $hosted->buildFormData($order);
+            $data = $this->_method->buildHostedFormData($order);
             $this->getResponse()
                 ->setHeader('Content-Type', 'application/json')
                 ->setBody(json_encode($data));

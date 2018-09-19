@@ -20,7 +20,6 @@
 namespace Paymentsense\Payments\Controller\Direct;
 
 use Paymentsense\Payments\Controller\Action;
-use Paymentsense\Payments\Model\Method\Direct;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 
 /**
@@ -41,16 +40,18 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Magento\Sales\Model\OrderFactory $orderFactory
+     * @param \Paymentsense\Payments\Model\Method\Direct
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Sales\Model\OrderFactory $orderFactory
+        \Magento\Sales\Model\OrderFactory $orderFactory,
+        \Paymentsense\Payments\Model\Method\Direct $method
     ) {
         $this->_resultPageFactory = $resultPageFactory;
-        parent::__construct($context, $logger, $checkoutSession, $orderFactory);
+        parent::__construct($context, $logger, $checkoutSession, $orderFactory, $method);
     }
 
     /**
@@ -97,20 +98,31 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
      */
     private function processAcsResponse()
     {
+        $transactionResult = [
+            'StatusCode' => '',
+            'Message'    => ''
+        ];
         $postData = $this->getPostData();
-        $direct = $this->getObjectManager()->create(Direct::class);
+        $this->_method->getLogger()->info('Callback request from the ACS has been received.');
         $order = $this->getOrder();
         if (isset($order)) {
             $action = Action::THREEDSCOMPLETE;
-            $message = $direct->process3dsResponse($order, $postData);
-            $this->getCheckoutSession()->setPaymentsense3dsResponseMessage($message);
+            $transactionResult = $this->_method->process3dsResponse($order, $postData);
+            $this->getCheckoutSession()->setPaymentsense3dsResponseMessage($transactionResult['Message']);
         } else {
             $action = Action::THREEDSERROR;
         }
-        $link = $direct->getModuleHelper()->getUrlBuilder()->getUrl('paymentsense/direct', ['action' => $action]);
+        $link = $this->_method->getModuleHelper()->getUrlBuilder()->getUrl(
+            'paymentsense/direct',
+            ['action' => $action]
+        );
         $html='<html><head><script>window.top.location.href = "' . $link . '";</script></head></html>';
         $this->getResponse()->setBody($html);
         $this->getCheckoutSession()->setPaymentsenseAcsUrl(null);
+        $this->_method->getLogger()->info(
+            'Callback request from the ACS has been processed. ' .
+            'Transaction status code was "' . $transactionResult['StatusCode'] . '".'
+        );
     }
 
     /**
@@ -132,11 +144,10 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
      */
     private function process3dsError()
     {
-        $direct = $this->getObjectManager()->create(\Paymentsense\Payments\Model\Method\Direct::class);
         $message = "A 3-D Secure authentication error occurred while processing the order";
         $order = $this->getOrder();
         if (isset($order)) {
-            $direct->getModuleHelper()->setOrderState($order, TransactionResultCode::FAILED, $message);
+            $this->_method->getModuleHelper()->setOrderState($order, TransactionResultCode::FAILED, $message);
         }
         $this->executeCancelAction($message);
     }
@@ -146,11 +157,10 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
      */
     private function process3dsCancel()
     {
-        $direct = $this->getObjectManager()->create(\Paymentsense\Payments\Model\Method\Direct::class);
         $message = "Customer cancelled the order at the 3-D Secure authentication";
         $order = $this->getOrder();
         if (isset($order)) {
-            $direct->getModuleHelper()->setOrderState($order, TransactionResultCode::FAILED, $message);
+            $this->_method->getModuleHelper()->setOrderState($order, TransactionResultCode::FAILED, $message);
         }
         $this->executeCancelAction($message);
     }

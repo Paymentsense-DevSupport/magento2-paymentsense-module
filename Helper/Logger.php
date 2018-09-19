@@ -22,28 +22,48 @@ namespace Paymentsense\Payments\Helper;
 /**
  * Logger
  *
- * Log files reside in the /var/log/paymentsense directory
+ * Log files reside in the /var/log/paymentsense directory. Failback is the system log.
  *
  * @package Paymentsense\Payments\Helper
  */
 class Logger extends \Magento\Payment\Model\Method\Logger
 {
     /**
-     * @param string $name
+     * @var LoggerInterface
      */
-    public function __construct($name)
+    protected $logger;
+
+    /**
+     * @param mixed $method
+     */
+    public function __construct($method)
     {
-        $handler = new \Magento\Framework\Logger\Handler\Base(
-            new \Magento\Framework\Filesystem\Driver\File(),
-            BP . '/var/log/paymentsense/',
-            $name . '.log'
-        );
-        $logger = new \Monolog\Logger($name, [$handler]);
+        if ($method instanceof \Magento\Payment\Model\Method\AbstractMethod) {
+            $name = $method->getCode();
+            $handler = new \Magento\Framework\Logger\Handler\Base(
+                new \Magento\Framework\Filesystem\Driver\File(),
+                BP . '/var/log/paymentsense/',
+                $name . '.log'
+            );
+            $logger = new PaymentsenseLogger($name, [$handler], [], $method);
+        } else {
+            // Failback
+            $name = 'paymentsense';
+            $handler = new \Magento\Framework\Logger\Handler\Base(
+                new \Magento\Framework\Filesystem\Driver\File(),
+                BP . '/var/log/system.log'
+            );
+            $logger = new \Monolog\Logger($name, [$handler]);
+            $logger->error(
+                'An error occurred while trying to initialise logger helper: Invalid payment method.'
+            );
+        }
         parent::__construct($logger);
+        $this->logger = $logger;
     }
 
     /**
-     * @return \Psr\Log\LoggerInterface
+     * @return LoggerInterface
      */
     public function getLogger()
     {

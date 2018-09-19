@@ -151,8 +151,13 @@ trait CrossReferenceTransactions
         $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
         $psgw              = new Psgw($zendClientFactory);
         $response          = $psgw->performCrossRefTxn($trxData);
-        $status            = $response['StatusCode'];
-        if ($status !== false) {
+
+        $this->getLogger()->info(
+            'Reference transaction ' . $response['CrossReference'] .
+            ' has been performed with status code "' . $response['StatusCode'] . '".'
+        );
+
+        if ($response['StatusCode'] !== false) {
             $payment
                 ->setTransactionId($response['CrossReference'])
                 ->setParentTransactionId($trxData['CrossReference'])
@@ -305,7 +310,7 @@ trait CrossReferenceTransactions
         $order        = $payment->getOrder();
         $orderId      = $order->getIncrementId();
 
-        $this->getLogger()->debug('REFUND transaction for order #' . $orderId);
+        $this->getLogger()->info('Preparing REFUND transaction for order #' . $orderId);
 
         $captureTransaction = $this->getModuleHelper()->lookUpCaptureTransaction($payment);
 
@@ -321,7 +326,7 @@ trait CrossReferenceTransactions
         }
 
         if ($errorMessage !== '') {
-            $this->getLogger()->error($errorMessage);
+            $this->getLogger()->warning($errorMessage);
             $this->getModuleHelper()->throwWebapiException($errorMessage);
         }
 
@@ -341,7 +346,7 @@ trait CrossReferenceTransactions
         $order        = $payment->getOrder();
         $orderId      = $order->getIncrementId();
 
-        $this->getLogger()->debug('COLLECTION transaction for order #' . $orderId);
+        $this->getLogger()->info('Preparing COLLECTION transaction for order #' . $orderId);
 
         $authTransaction = $this->getModuleHelper()->lookUpAuthorisationTransaction($payment);
 
@@ -357,7 +362,7 @@ trait CrossReferenceTransactions
         }
 
         if ($errorMessage !== '') {
-            $this->getLogger()->error($errorMessage);
+            $this->getLogger()->warning($errorMessage);
             $this->getModuleHelper()->throwWebapiException($errorMessage);
         }
 
@@ -376,7 +381,7 @@ trait CrossReferenceTransactions
         $order        = $payment->getOrder();
         $orderId      = $order->getIncrementId();
 
-        $this->getLogger()->debug('VOID transaction for order #' . $orderId);
+        $this->getLogger()->info('Preparing VOID transaction for order #' . $orderId);
 
         $referenceTransaction = $this->getModuleHelper()->lookUpVoidableTransaction($payment);
 
@@ -392,7 +397,7 @@ trait CrossReferenceTransactions
         }
 
         if ($errorMessage !== '') {
-            $this->getLogger()->error($errorMessage);
+            $this->getLogger()->warning($errorMessage);
             $this->getModuleHelper()->throwWebapiException($errorMessage);
         }
 

@@ -24,6 +24,7 @@ use Paymentsense\Payments\Model\Psgw\DataBuilder;
 use Paymentsense\Payments\Model\Psgw\TransactionType;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 use Paymentsense\Payments\Model\Traits\BaseMethod;
+use Magento\Sales\Model\Order\Payment\Transaction;
 
 /**
  * Abstract Card class used by the Direct and MOTO payment methods
@@ -109,7 +110,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      *
      * @return \Psr\Log\LoggerInterface
      */
-    protected function getLogger()
+    public function getLogger()
     {
         return $this->logger->getLogger();
     }
@@ -121,22 +122,54 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      */
     public function getConfigPaymentAction()
     {
-        $transactionTypeActions = [
-            TransactionType::PREAUTH =>
-                \Magento\Payment\Model\Method\AbstractMethod::ACTION_AUTHORIZE,
-            TransactionType::SALE    =>
-                \Magento\Payment\Model\Method\AbstractMethod::ACTION_AUTHORIZE_CAPTURE,
-        ];
-        $transactionType = $this->getConfigTransactionType();
-        if (!array_key_exists($transactionType, $transactionTypeActions)) {
-            $this->getModuleHelper()->throwWebapiException(
-                sprintf(
-                    'Transaction Type (%s) not supported yet',
-                    $transactionType
-                )
-            );
+        $action = null;
+        $config = $this->getConfigHelper();
+        $transactionType = $config->getTransactionType();
+        switch ($transactionType) {
+            case TransactionType::PREAUTH:
+                $action = \Magento\Payment\Model\Method\AbstractMethod::ACTION_AUTHORIZE;
+                break;
+            case TransactionType::SALE:
+                $action = \Magento\Payment\Model\Method\AbstractMethod::ACTION_AUTHORIZE_CAPTURE;
+                break;
+            default:
+                $message = sprintf($this->getHelper()->__('Transaction type is "%s" not supported', $transactionType));
+                $this->getLogger()->error($message);
+                $this->getModuleHelper()->throwWebapiException(
+                    sprintf('Transaction type is "%s" not supported', $transactionType)
+                );
         }
-        return $transactionTypeActions[$transactionType];
+
+        return $action;
+    }
+
+    /**
+     * Builds the data for the form redirecting to the ACS
+     *
+     * @param string $termUrl The callback URL when returing from the ACS
+     *
+     * @return array
+     */
+    public function buildAcsFormData($termUrl)
+    {
+        $fields          = null;
+        $checkoutSession = $this->getCheckoutSession();
+        if (!empty($checkoutSession)) {
+            $order = $checkoutSession->getLastRealOrder();
+            if (!empty($order)) {
+                $orderId = $order->getRealOrderId();
+                $fields  = [
+                    'url' => $checkoutSession->getPaymentsenseAcsUrl(),
+                    'elements' => [
+                        'PaReq' => $checkoutSession->getPaymentsensePaReq(),
+                        'MD' => $checkoutSession->getPaymentsenseMD(),
+                        'TermUrl' => $termUrl
+                    ]
+                ];
+                $this->getLogger()->info('Preparing ACS redirect for order #' . $orderId);
+            }
+        }
+        return $fields;
     }
 
     /**
@@ -150,9 +183,10 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      */
     public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
-        $order        = $payment->getOrder();
-        $orderId      = $order->getIncrementId();
-        $this->getLogger()->debug('PREAUTH transaction for order #' . $orderId);
+        $this->getLogger()->info('ACTION_AUTHORIZE has been triggered.');
+        $order = $payment->getOrder();
+        $orderId = $order->getIncrementId();
+        $this->getLogger()->info('Preparing PREAUTH transaction for order #' . $orderId);
         return $this->processInitialTransaction($payment, $amount);
     }
 
@@ -177,19 +211,23 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         if (isset($authTransaction)) {
             // Existing order
             try {
-                $this->getLogger()->debug('COLLECTION transaction for order #' . $orderId);
+                $this->getLogger()->info('Preparing COLLECTION transaction for order #' . $orderId);
                 $this->performCollection($payment, $amount, $authTransaction);
             } catch (\Exception $e) {
                 $errorMessage = $e->getMessage();
             }
         } else {
             // New order
-            $this->getLogger()->debug($this->getConfigTransactionType() . ' transaction for order #' . $orderId);
+            $this->getLogger()->info('ACTION_AUTHORIZE_CAPTURE has been triggered.');
+            $config = $this->getConfigHelper();
+            $this->getLogger()->info(
+                'Preparing ' . $config->getTransactionType() . ' transaction for order #' . $orderId
+            );
             return $this->processInitialTransaction($payment, $amount);
         }
 
         if ($errorMessage !== '') {
-            $this->getLogger()->error($errorMessage);
+            $this->getLogger()->warning($errorMessage);
             $this->getModuleHelper()->throwWebapiException($errorMessage);
         }
 
@@ -214,7 +252,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         if (empty($billingAddress)) {
             throw new \Magento\Framework\Exception\LocalizedException(__('Billing address is empty.'));
         }
-        $transactionType = $this->getConfigTransactionType();
+        $transactionType = $config->getTransactionType();
         $cardName = (!empty($payment->getCcOwner())) ?
             $payment->getCcOwner() :
             $billingAddress->getFirstname() . ' ' . $billingAddress->getLastname();
@@ -260,9 +298,10 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
     // phpcs:ignore Generic.Metrics.CyclomaticComplexity
     protected function processInitialTransaction($payment, $amount)
     {
+        $config            = $this->getConfigHelper();
         $order             = $payment->getOrder();
         $orderId           = $order->getRealOrderId();
-        $transactionType   = $this->getConfigTransactionType();
+        $transactionType   = $config->getTransactionType();
         $trxData           = $this->buildInitialTransactionData($payment, $amount);
         $objectManager     = $this->getModuleHelper()->getObjectManager();
         $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
@@ -277,10 +316,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                     ->setTransactionId($response['CrossReference'])
                     ->setIsTransactionPending($status === TransactionResultCode::INCOMPLETE)
                     ->setIsTransactionClosed(false)
-                    ->setTransactionAdditionalInfo(
-                        \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
-                        $response
-                    );
+                    ->setTransactionAdditionalInfo(Transaction::RAW_DETAILS, $response);
                 switch ($status) {
                     case TransactionResultCode::SUCCESS:
                         $isTransactionFailed = false;
@@ -293,9 +329,8 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                             $errorMessage = __('Transaction failed. ACSURL, PaReq or CrossReference is empty.');
                         } else {
                             $isTransactionFailed = true;
-                            $errorMessage = __('The card is enrolled in a 3-D Secure scheme. ') .
-                                __('This payment method does not support processing of cards enrolled in a ' .
-                                    '3-D Secure scheme.');
+                            $errorMessage = __('Please ensure you are using a Paymentsense MOTO account for MOTO ') .
+                                __('transactions (this will have a different merchant id to your ECOM account).');
                         }
                         break;
                     default:
@@ -306,6 +341,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                 $isTransactionFailed = true;
                 $errorMessage = 'Transaction failed. ' . $response['Message'];
             }
+
             if ($isTransactionFailed) {
                 $this->getCheckoutSession()->setPaymentsenseCheckoutErrorMessage($errorMessage);
                 $this->getModuleHelper()->throwWebapiException($errorMessage);
@@ -320,10 +356,15 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                 $this->getCheckoutSession()->setPaymentsensePaReq(null);
                 $this->getCheckoutSession()->setPaymentsenseMD(null);
             }
+
+            $this->getLogger()->info(
+                $transactionType . ' transaction ' . $response['CrossReference'] .
+                ' has been performed with status code "' . $response['StatusCode'] . '".'
+            );
         } catch (\Exception $e) {
             $logInfo = $transactionType . ' transaction for order #' . $orderId .
                 ' failed with message "' . $e->getMessage() . '"';
-            $this->getLogger()->error($logInfo);
+            $this->getLogger()->warning($logInfo);
             $this->getCheckoutSession()->setPaymentsenseCheckoutErrorMessage($e->getMessage());
             $this->getModuleHelper()->throwWebapiException($e->getMessage());
         }
@@ -334,15 +375,15 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * Processes the 3-D Secure response from the ACS
      *
      * @param \Magento\Sales\Model\Order $order
-     * @param array $postData
-     * @return string
+     * @param array $postData The POST variables received from the ACS
+     * @return array Array containing StatusCode and Message
      */
     public function process3dsResponse($order, $postData)
     {
         $orderId = $order->getRealOrderId();
         $config  = $this->getConfigHelper();
+        $status  = null;
         $message = "Invalid response received from the ACS.";
-
         if (array_key_exists('PaRes', $postData) && array_key_exists('MD', $postData)) {
             $trxData = [
                 'MerchantID'     => $config->getMerchantId(),
@@ -356,19 +397,22 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
             $psgw              = new Psgw($zendClientFactory);
 
             try {
-                $this->getLogger()->debug('3-D Secure authentication for order #' . $orderId);
-                $response            = $psgw->perform3dsAuthTxn($trxData);
-                $status              = $response['StatusCode'];
+                $this->getLogger()->info('Preparing 3-D Secure authentication for order #' . $orderId);
+                $response = $psgw->perform3dsAuthTxn($trxData);
+                $status   = $response['StatusCode'];
+
+                $this->getLogger()->info(
+                    '3-D Secure authentication transaction ' . $response['CrossReference'] .
+                    ' has been performed with status code "' . $response['StatusCode'] . '".'
+                );
+
                 $isTransactionFailed = ($status !== TransactionResultCode::SUCCESS);
                 $payment             = $order->getPayment();
                 $payment
                     ->setTransactionId($response['CrossReference'])
                     ->setIsTransactionPending(false)
                     ->setIsTransactionClosed($isTransactionFailed)
-                    ->setTransactionAdditionalInfo(
-                        \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
-                        $response
-                    );
+                    ->setTransactionAdditionalInfo(Transaction::RAW_DETAILS, $response);
 
                 if ($isTransactionFailed) {
                     $message = '3-D Secure Authentication failed. Payment Gateway Message: ' . $response['Message'];
@@ -382,16 +426,19 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                 $response['Amount']          = $order->getTotalDue() * 100;
                 $response['TransactionType'] = $config->getTransactionType();
 
-                $this->updatePayment($response);
+                $this->updatePayment($order, $response);
             } catch (\Exception $e) {
                 $logInfo = '3-D Secure Authentication for order #' . $orderId .
                     ' failed with message "' . $e->getMessage() . '"';
                 $message = $logInfo;
-                $this->getLogger()->error($logInfo);
+                $this->getLogger()->warning($logInfo);
             }
         }
 
-        return $message;
+        return [
+            'StatusCode' => $status,
+            'Message'    => $message
+        ];
     }
 
     /**

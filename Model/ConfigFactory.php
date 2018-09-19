@@ -19,6 +19,8 @@
 
 namespace Paymentsense\Payments\Model;
 
+use Paymentsense\Payments\Model\Config;
+
 /**
  * Factory class used for the creating of class instances
  */
@@ -44,7 +46,7 @@ class ConfigFactory
      */
     public function __construct(
         \Magento\Framework\ObjectManagerInterface $objectManager,
-        $instanceName = \Paymentsense\Payments\Model\Config::class
+        $instanceName = Config::class
     ) {
         $this->_objectManager = $objectManager;
         $this->_instanceName = $instanceName;

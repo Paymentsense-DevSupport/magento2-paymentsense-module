@@ -86,6 +86,18 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+##### 2.0.1
+### Added
+- Configurable logging
+- Code optimisation and rework
+
+### Changed
+- Status for orders before payment as "Pending Payment"
+
+### Fixed
+- Typos
+
+
 ##### 2.0.0
 Initial Release
 

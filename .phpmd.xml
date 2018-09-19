@@ -12,11 +12,6 @@
     <rule ref="rulesets/codesize.xml">
         <exclude name="ExcessiveParameterList" />
     </rule>
-    <rule ref="rulesets/codesize.xml/ExcessiveMethodLength">
-        <properties>
-            <property name="minimum" value="100" />
-        </properties>
-    </rule>
     <rule ref="rulesets/naming.xml">
         <exclude name="LongVariable" />
     </rule>

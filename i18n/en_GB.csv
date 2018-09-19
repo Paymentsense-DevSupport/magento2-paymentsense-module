@@ -14,3 +14,5 @@ Collapse,Collapse
 "Cancel order & restore cart","Cancel order & restore cart"
 "An error occurred while processing 3-D Secure authentication.","An error occurred while processing 3-D Secure authentication."
 "Continue to the payment methods","Continue to the payment methods"
+"Transaction type is ""%s"" not supported","Transaction type is ""%s"" not supported"
+"Please ensure you are using a Paymentsense MOTO account for MOTO transactions (this will have a different merchant id to your ECOM account).","Please ensure you are using a Paymentsense MOTO account for MOTO transactions (this will have a different merchant id to your ECOM account)."

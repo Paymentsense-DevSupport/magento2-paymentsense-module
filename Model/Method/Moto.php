@@ -28,7 +28,7 @@ class Moto extends Card
 {
     const CODE = 'paymentsense_moto';
 
-    protected $_code = self::CODE;
+    protected $_code           = self::CODE;
     protected $_canUseCheckout = false;
     protected $_canUseInternal = true;
 }

@@ -42,20 +42,28 @@ abstract class CheckoutAction extends \Paymentsense\Payments\Controller\Action
     protected $_checkoutHelper;
 
     /**
+     * @var \Paymentsense\Payments\Model\Method\Hosted|\Paymentsense\Payments\Model\Method\Direct
+     */
+    protected $_method;
+
+    /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Magento\Sales\Model\OrderFactory $orderFactory
+     * @param \Magento\Payment\Model\Method\AbstractMethod $method
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Sales\Model\OrderFactory $orderFactory
+        \Magento\Sales\Model\OrderFactory $orderFactory,
+        $method
     ) {
         parent::__construct($context, $logger);
         $this->_checkoutSession = $checkoutSession;
-        $this->_orderFactory = $orderFactory;
+        $this->_orderFactory    = $orderFactory;
+        $this->_method          = $method;
     }
 
     /**
@@ -116,7 +124,9 @@ abstract class CheckoutAction extends \Paymentsense\Payments\Controller\Action
      */
     protected function executeSuccessAction()
     {
+        $this->_method->getLogger()->info('Success Action has been triggered.');
         $this->redirectToCheckoutOnePageSuccess();
+        $this->_method->getLogger()->info('A redirect to the Checkout Success Page has been set.');
     }
 
     /**
@@ -126,9 +136,11 @@ abstract class CheckoutAction extends \Paymentsense\Payments\Controller\Action
      */
     protected function executeFailureAction($message)
     {
+        $this->_method->getLogger()->info('Failure Action with message "' . $message . '" has been triggered.');
         $this->getMessageManager()->addErrorMessage($message);
         $this->cancelOrderAndRestoreQuote($message);
         $this->redirectToCheckoutCart();
+        $this->_method->getLogger()->info('A redirect to the Checkout Cart has been set.');
     }
 
     /**
@@ -146,8 +158,10 @@ abstract class CheckoutAction extends \Paymentsense\Payments\Controller\Action
      */
     protected function executeCancelAction($message)
     {
+        $this->_method->getLogger()->info('Cancel Action with message "' . $message . '" has been triggered.');
         $this->cancelOrderAndRestoreQuote($message);
         $this->redirectToCheckoutFragmentPayment();
+        $this->_method->getLogger()->info('A redirect to the Checkout Fragment Payment has been set.');
     }
 
     /**

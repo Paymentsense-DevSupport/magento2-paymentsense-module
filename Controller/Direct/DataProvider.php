@@ -19,8 +19,6 @@
 
 namespace Paymentsense\Payments\Controller\Direct;
 
-use Paymentsense\Payments\Model\Method\Direct;
-
 /**
  * Provides data for the form redirecting to the ACS (Access Control Server)
  *
@@ -29,21 +27,36 @@ use Paymentsense\Payments\Model\Method\Direct;
 class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
 {
     /**
+     * @param \Magento\Framework\App\Action\Context $context
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Magento\Checkout\Model\Session $checkoutSession
+     * @param \Magento\Sales\Model\OrderFactory $orderFactory
+     * @param \Paymentsense\Payments\Model\Method\Direct
+     */
+    // @codingStandardsIgnoreStart
+    public function __construct(
+        \Magento\Framework\App\Action\Context $context,
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Checkout\Model\Session $checkoutSession,
+        \Magento\Sales\Model\OrderFactory $orderFactory,
+        \Paymentsense\Payments\Model\Method\Direct $method
+    ) {
+        parent::__construct($context, $logger, $checkoutSession, $orderFactory, $method);
+    }
+    // @codingStandardsIgnoreEnd
+
+    /**
      * Handles ajax requests and provides the form data for redirecting to the ACS
      * Generates application/json response containing the form data in JSON format
      */
     public function execute()
     {
-        $direct = $this->getObjectManager()->create(Direct::class);
-        $termUrl= $direct->getModuleHelper()->getUrl($direct->getCode(), 'index', ['action' => self::ACSRESPONSE]);
-        $data = [
-            'url'      => $this->getCheckoutSession()->getPaymentsenseAcsUrl(),
-            'elements' => [
-                'PaReq'   => $this->getCheckoutSession()->getPaymentsensePaReq(),
-                'MD'      => $this->getCheckoutSession()->getPaymentsenseMD(),
-                'TermUrl' => $termUrl
-            ]
-        ];
+        $termUrl= $this->_method->getModuleHelper()->getUrl(
+            $this->_method->getCode(),
+            'index',
+            ['action' => self::ACSRESPONSE]
+        );
+        $data = $this->_method->buildAcsFormData($termUrl);
         $this->getResponse()
             ->setHeader('Content-Type', 'application/json')
             ->setBody(json_encode($data));

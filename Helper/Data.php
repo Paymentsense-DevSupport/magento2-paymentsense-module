@@ -20,6 +20,8 @@
 namespace Paymentsense\Payments\Helper;
 
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
+use Magento\Sales\Model\Order\Payment\Transaction;
+use Magento\Sales\Model\Order;
 
 /**
  * Helper common for all payment methods
@@ -255,7 +257,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function setPaymentTransactionAdditionalInfo($payment, $response)
     {
         $payment->setTransactionAdditionalInfo(
-            \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
+            Transaction::RAW_DETAILS,
             $response
         );
     }
@@ -269,7 +271,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function setTransactionAdditionalInfo($transaction, $response)
     {
         $transaction->setAdditionalInformation(
-            \Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS,
+            Transaction::RAW_DETAILS,
             $response
         );
     }
@@ -298,19 +300,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         switch ($status) {
             case TransactionResultCode::SUCCESS:
-                $this->setOrderStatusByState(
-                    $order,
-                    \Magento\Sales\Model\Order::STATE_PROCESSING
-                );
+                $this->setOrderStatusByState($order, Order::STATE_PROCESSING);
                 $order->save();
                 break;
 
             case TransactionResultCode::INCOMPLETE:
             case TransactionResultCode::REFERRED:
-                $this->setOrderStatusByState(
-                    $order,
-                    \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT
-                );
+                $this->setOrderStatusByState($order, Order::STATE_PENDING_PAYMENT);
                 $order->save();
                 break;
 
@@ -341,7 +337,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $transaction = null;
         if (!empty($fieldValue)) {
-            $transactionObj = $this->getObjectManager()->create(\Magento\Sales\Model\Order\Payment\Transaction::class);
+            $transactionObj = $this->getObjectManager()->create(Transaction::class);
             $transaction = $transactionObj->load($fieldValue, $fieldName);
             if (!$transaction->getId()) {
                 $transaction = null;
@@ -359,9 +355,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function lookUpTransaction($payment, $transactionTypes)
     {
-        $transaction = null;
-        $lastPaymentTransactionId = $payment->getLastTransId();
-        $transaction = $this->getPaymentTransaction($lastPaymentTransactionId, 'txn_id');
+        $transaction       = null;
+        $lastTransactionId = $payment->getLastTransId();
+        $transaction       = $this->getPaymentTransaction($lastTransactionId, 'txn_id');
         while (isset($transaction)) {
             if (in_array($transaction->getTxnType(), $transactionTypes)) {
                 break;
@@ -379,10 +375,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function lookUpAuthorisationTransaction($payment)
     {
-        $transactionTypes = [
-            \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH
-        ];
-        return $this->lookUpTransaction($payment, $transactionTypes);
+        return $this->lookUpTransaction($payment, [Transaction::TYPE_AUTH]);
     }
 
     /**
@@ -394,7 +387,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function lookUpCaptureTransaction($payment)
     {
         $transactionTypes = [
-            \Magento\Sales\Model\Order\Payment\Transaction::TYPE_CAPTURE
+            Transaction::TYPE_CAPTURE
         ];
         return $this->lookUpTransaction($payment, $transactionTypes);
     }
@@ -408,8 +401,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function lookUpVoidableTransaction($payment)
     {
         $transactionTypes = [
-            \Magento\Sales\Model\Order\Payment\Transaction::TYPE_CAPTURE,
-            \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH
+            Transaction::TYPE_CAPTURE,
+            Transaction::TYPE_AUTH
         ];
         return $this->lookUpTransaction($payment, $transactionTypes);
     }

@@ -30,37 +30,31 @@ trait CardDetailsTransactions
     /**
      * Updates payment info and registers Card Details Transactions
      *
+     * @param \Magento\Sales\Model\Order $order
      * @param array $response An array containing transaction response data from the gateway
      *
      * @throws \Exception
      */
-    public function updatePayment($response)
+    public function updatePayment($order, $response)
     {
-        if (array_key_exists('OrderID', $response)) {
-            $objectManager = $this->getModuleHelper()->getObjectManager();
-            $orderObj      = $objectManager->create(\Magento\Sales\Model\Order::class);
-            $order         = $orderObj->loadByIncrementId($response['OrderID']);
-            if ($order) {
-                $transactionID = $response['CrossReference'];
-                $payment = $order->getPayment();
-                $lastPaymentTransactionId = $payment->getLastTransId();
-                $payment->setMethod($this->getCode());
-                $payment->setLastTransId($transactionID);
-                $payment->setTransactionId($transactionID);
-                $payment->setParentTransactionId($lastPaymentTransactionId);
-                $payment->setShouldCloseParentTransaction(true);
-                $payment->setIsTransactionPending($response['StatusCode'] !== TransactionResultCode::SUCCESS);
-                $payment->setIsTransactionClosed($response['TransactionType'] === TransactionType::SALE);
-                $this->getModuleHelper()->setPaymentTransactionAdditionalInfo($payment, $response);
-                if ($response['StatusCode'] === TransactionResultCode::SUCCESS) {
-                    if ($response['TransactionType'] === 'SALE') {
-                        $payment->registerCaptureNotification($response['Amount'] / 100);
-                    } else {
-                        $payment->registerAuthorizationNotification($response['Amount'] / 100);
-                    }
-                }
-                $order->save();
+        $transactionID     = $response['CrossReference'];
+        $payment           = $order->getPayment();
+        $lastTransactionId = $payment->getLastTransId();
+        $payment->setMethod($this->getCode());
+        $payment->setLastTransId($transactionID);
+        $payment->setTransactionId($transactionID);
+        $payment->setParentTransactionId($lastTransactionId);
+        $payment->setShouldCloseParentTransaction(true);
+        $payment->setIsTransactionPending($response['StatusCode'] !== TransactionResultCode::SUCCESS);
+        $payment->setIsTransactionClosed($response['TransactionType'] === TransactionType::SALE);
+        $this->getModuleHelper()->setPaymentTransactionAdditionalInfo($payment, $response);
+        if ($response['StatusCode'] === TransactionResultCode::SUCCESS) {
+            if ($response['TransactionType'] === TransactionType::SALE) {
+                $payment->registerCaptureNotification($response['Amount'] / 100);
+            } else {
+                $payment->registerAuthorizationNotification($response['Amount'] / 100);
             }
         }
+        $order->save();
     }
 }

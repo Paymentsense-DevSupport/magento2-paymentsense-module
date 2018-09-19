@@ -17,18 +17,26 @@
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
-namespace Paymentsense\Payments\Model\Method;
+namespace Paymentsense\Payments\Model\Config;
 
 /**
- * Direct payment method model
+ * Log Level Model Source
  *
- * @package Paymentsense\Payments\Model\Method
+ * @package Paymentsense\Payments\Model\Config
  */
-class Direct extends Card
+class LogLevel implements \Magento\Framework\Option\ArrayInterface
 {
-    const CODE = 'paymentsense_direct';
-
-    protected $_code           = self::CODE;
-    protected $_canUseCheckout = true;
-    protected $_canUseInternal = false;
+    /**
+     * Builds the options for the select control in the admin panel
+     *
+     * @return array
+     */
+    public function toOptionArray()
+    {
+        return [
+            ['value' => '1', 'label' => 'Error messages'],
+            ['value' => '2', 'label' => 'Error and warning messages'],
+            ['value' => '3', 'label' => 'Error, warnings and info messages']
+        ];
+    }
 }
