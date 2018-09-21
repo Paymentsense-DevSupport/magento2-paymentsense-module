@@ -50,6 +50,11 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
     protected $_canSaveCc               = false;
 
     /**
+     * @var OrderSender
+     */
+    protected $_orderSender;
+
+    /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\App\Action\Context $actionContext
      * @param \Magento\Framework\Registry $registry
@@ -64,6 +69,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
+     * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
      * @param array $data
      */
     public function __construct(
@@ -79,6 +85,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         \Paymentsense\Payments\Helper\Data $moduleHelper,
         \Magento\Framework\Module\ModuleListInterface $moduleList,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
+        \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
@@ -102,6 +109,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         $this->_storeManager    = $storeManager;
         $this->_checkoutSession = $checkoutSession;
         $this->_moduleHelper    = $moduleHelper;
+        $this->_orderSender     = $orderSender;
         $this->_configHelper    = $this->getModuleHelper()->getMethodConfig($this->getCode());
     }
 
@@ -146,7 +154,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
     /**
      * Builds the data for the form redirecting to the ACS
      *
-     * @param string $termUrl The callback URL when returing from the ACS
+     * @param string $termUrl The callback URL when returning from the ACS
      *
      * @return array
      */
@@ -185,6 +193,9 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
     {
         $this->getLogger()->info('ACTION_AUTHORIZE has been triggered.');
         $order = $payment->getOrder();
+        if ($this->_canUseCheckout) {
+            $order->setCanSendNewEmailFlag(false);
+        }
         $orderId = $order->getIncrementId();
         $this->getLogger()->info('Preparing PREAUTH transaction for order #' . $orderId);
         return $this->processInitialTransaction($payment, $amount);
@@ -219,6 +230,9 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         } else {
             // New order
             $this->getLogger()->info('ACTION_AUTHORIZE_CAPTURE has been triggered.');
+            if ($this->_canUseCheckout) {
+                $order->setCanSendNewEmailFlag(false);
+            }
             $config = $this->getConfigHelper();
             $this->getLogger()->info(
                 'Preparing ' . $config->getTransactionType() . ' transaction for order #' . $orderId
@@ -250,7 +264,11 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         $orderId        = $order->getRealOrderId();
         $billingAddress = $order->getBillingAddress();
         if (empty($billingAddress)) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('Billing address is empty.'));
+            throw new \Magento\Framework\Exception\LocalizedException(
+                new \Magento\Framework\Phrase(
+                    __('Billing address is empty.')
+                )
+            );
         }
         $transactionType = $config->getTransactionType();
         $cardName = (!empty($payment->getCcOwner())) ?
@@ -355,6 +373,9 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                 $this->getCheckoutSession()->setPaymentsense3dsResponseMessage(null);
                 $this->getCheckoutSession()->setPaymentsensePaReq(null);
                 $this->getCheckoutSession()->setPaymentsenseMD(null);
+                if ($this->_canUseCheckout && ($status === TransactionResultCode::SUCCESS)) {
+                    $order->setCanSendNewEmailFlag(true);
+                }
             }
 
             $this->getLogger()->info(
@@ -406,7 +427,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                     ' has been performed with status code "' . $response['StatusCode'] . '".'
                 );
 
-                $isTransactionFailed = ($status !== TransactionResultCode::SUCCESS);
+                $isTransactionFailed = $status !== TransactionResultCode::SUCCESS;
                 $payment             = $order->getPayment();
                 $payment
                     ->setTransactionId($response['CrossReference'])
@@ -414,24 +435,27 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                     ->setIsTransactionClosed($isTransactionFailed)
                     ->setTransactionAdditionalInfo(Transaction::RAW_DETAILS, $response);
 
-                if ($isTransactionFailed) {
-                    $message = '3-D Secure Authentication failed. Payment Gateway Message: ' . $response['Message'];
-                    $this->getModuleHelper()->setOrderState($order, $status, $message);
-                } else {
-                    $message = '';
-                    $this->getModuleHelper()->setOrderState($order, $status);
-                }
+                $message = $isTransactionFailed
+                    ? '3-D Secure Authentication failed. Payment Gateway Message: ' . $response['Message']
+                    : '';
+
+                $this->getModuleHelper()->setOrderState($order, $status, $message);
 
                 $response['OrderID']         = $orderId;
                 $response['Amount']          = $order->getTotalDue() * 100;
                 $response['TransactionType'] = $config->getTransactionType();
 
                 $this->updatePayment($order, $response);
+                if (!$isTransactionFailed) {
+                    $this->sendNewOrderEmail($order);
+                }
             } catch (\Exception $e) {
-                $logInfo = '3-D Secure Authentication for order #' . $orderId .
-                    ' failed with message "' . $e->getMessage() . '"';
-                $message = $logInfo;
+                $logInfo = 'An error occurred while processing 3-D Secure Authentication response for order #' .
+                    $orderId . ': "' . $e->getMessage() . '"';
                 $this->getLogger()->warning($logInfo);
+                $message = 'An error occurred while retrieving the status of your payment. ' .
+                    'Please contact us quoting order #' . $orderId . '.';
+                $this->getModuleHelper()->setOrderState($order, TransactionResultCode::INCOMPLETE);
             }
         }
 

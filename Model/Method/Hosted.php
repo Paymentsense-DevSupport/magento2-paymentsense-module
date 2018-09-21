@@ -52,6 +52,11 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
     protected $_canUseInternal          = false;
 
     /**
+     * @var OrderSender
+     */
+    protected $_orderSender;
+
+    /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\App\Action\Context $actionContext
      * @param \Magento\Framework\Registry $registry
@@ -64,6 +69,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
      * @param \Paymentsense\Payments\Helper\Data $moduleHelper
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
+     * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
      * @param array $data
      */
     public function __construct(
@@ -77,6 +83,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Paymentsense\Payments\Helper\Data $moduleHelper,
+        \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
@@ -98,6 +105,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
         $this->_storeManager    = $storeManager;
         $this->_checkoutSession = $checkoutSession;
         $this->_moduleHelper    = $moduleHelper;
+        $this->_orderSender     = $orderSender;
         $this->_configHelper    = $this->getModuleHelper()->getMethodConfig($this->getCode());
     }
 
@@ -145,6 +153,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
     {
         $this->getLogger()->info('ACTION_ORDER has been triggered.');
         $order = $payment->getOrder();
+        $order->setCanSendNewEmailFlag(false);
         $order->setState(Order::STATE_NEW);
         $orderId = $order->getRealOrderId();
         $this->getLogger()->info('New order #' . $orderId . ' with amount ' . $amount . ' has been created.');
@@ -264,15 +273,10 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
                     $trxStatus = TransactionStatus::FAILED;
                     break;
             }
-            $order = $this->getOrder($postData);
-            if ($order) {
-                $this->getLogger()->info(
-                    'Card details transaction ' . $postData['CrossReference'] .
-                    ' has been performed with status code "' . $postData['StatusCode'] . '".'
-                );
-
-                $this->updatePayment($order, $postData);
-            }
+            $this->getLogger()->info(
+                'Card details transaction ' . $postData['CrossReference'] .
+                ' has been performed with status code "' . $postData['StatusCode'] . '".'
+            );
         } else {
             $this->getLogger()->warning('Callback request with invalid hash digest has been received.');
         }

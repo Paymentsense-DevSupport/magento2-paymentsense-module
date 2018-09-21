@@ -205,9 +205,11 @@ trait CrossReferenceTransactions
             $this->getMessageManager()->addSuccessMessage($response['Message']);
         } else {
             throw new \Magento\Framework\Exception\LocalizedException(
-                __('COLLECTION transaction failed. ') .
-                (($response['StatusCode'] !== false) ? __('Payment gateway message: ') : '') .
-                $response['Message']
+                new \Magento\Framework\Phrase(
+                    __('COLLECTION transaction failed. ') .
+                    (($response['StatusCode'] !== false) ? __('Payment gateway message: ') : '') .
+                    $response['Message']
+                )
             );
         }
 
@@ -247,9 +249,11 @@ trait CrossReferenceTransactions
             $this->getMessageManager()->addSuccessMessage($response['Message']);
         } else {
             throw new \Magento\Framework\Exception\LocalizedException(
-                __('REFUND transaction failed. ') .
-                (($response['StatusCode'] !== false) ? __('Payment gateway message: ') : '') .
-                $response['Message']
+                new \Magento\Framework\Phrase(
+                    __('REFUND transaction failed. ') .
+                    (($response['StatusCode'] !== false) ? __('Payment gateway message: ') : '') .
+                    $response['Message']
+                )
             );
         }
 
@@ -288,9 +292,11 @@ trait CrossReferenceTransactions
             $this->getMessageManager()->addSuccessMessage($response['Message']);
         } else {
             throw new \Magento\Framework\Exception\LocalizedException(
-                __('VOID transaction failed. ') .
-                (($response['StatusCode'] !== false) ? __('Payment gateway message: ') : '') .
-                $response['Message']
+                new \Magento\Framework\Phrase(
+                    __('VOID transaction failed. ') .
+                    (($response['StatusCode'] !== false) ? __('Payment gateway message: ') : '') .
+                    $response['Message']
+                )
             );
         }
 
@@ -383,17 +389,17 @@ trait CrossReferenceTransactions
 
         $this->getLogger()->info('Preparing VOID transaction for order #' . $orderId);
 
-        $referenceTransaction = $this->getModuleHelper()->lookUpVoidableTransaction($payment);
+        $authTransaction = $this->getModuleHelper()->lookUpAuthorisationTransaction($payment);
 
-        if (isset($referenceTransaction)) {
+        if (isset($authTransaction)) {
             try {
-                $this->performVoid($payment, $referenceTransaction);
+                $this->performVoid($payment, $authTransaction);
             } catch (\Exception $e) {
                 $errorMessage = $e->getMessage();
             }
         } else {
             $errorMessage = 'VOID transaction for order #' . $orderId .
-                ' cannot be finished (No Authorize / Capture Transaction exists)';
+                ' cannot be finished (No Authorize Transaction exists)';
         }
 
         if ($errorMessage !== '') {

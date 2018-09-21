@@ -20,7 +20,7 @@
 namespace Paymentsense\Payments\Model\Psgw;
 
 /**
- * Paymentsense gateway Class
+ * Paymentsense Gateway Class
  */
 class Psgw
 {
@@ -56,49 +56,49 @@ class Psgw
 
         // @codingStandardsIgnoreStart
         $xml = '<?xml version="1.0" encoding="utf-8"?>
-					 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-						 <soap:Body>
-							 <CardDetailsTransaction xmlns="https://www.thepaymentgateway.net/">
-								 <PaymentMessage>
-									 <MerchantAuthentication MerchantID="' . $trxData['MerchantID'] . '" Password="' . $trxData['Password'] . '" />
-									 <TransactionDetails Amount="' . $trxData['Amount'] . '" CurrencyCode="' . $trxData['CurrencyCode'] . '">
-										 <MessageDetails TransactionType="' . $trxData['TransactionType'] . '" />
-										 <OrderID>' . $trxData['OrderID'] . '</OrderID>
-										 <OrderDescription>' . $trxData['OrderDescription'] . '</OrderDescription>
-										 <TransactionControl>
-											<EchoCardType>TRUE</EchoCardType>
-											<EchoAVSCheckResult>TRUE</EchoAVSCheckResult>
-											<EchoCV2CheckResult>TRUE</EchoCV2CheckResult>
-											<EchoAmountReceived>TRUE</EchoAmountReceived>
-											<DuplicateDelay>20</DuplicateDelay>
-										 </TransactionControl>
-									 </TransactionDetails>
-									 <CardDetails>
-										<CardName>' . $trxData['CardName'] . '</CardName>
-										<CardNumber>' . $trxData['CardNumber'] . '</CardNumber>
-										<ExpiryDate Month="' . $trxData['ExpMonth'] . '" Year="' . $trxData['ExpYear'] . '" />
-										<CV2>' . $trxData['CV2'] . '</CV2>
-										<IssueNumber>' . $trxData['IssueNumber'] . '</IssueNumber>
-									 </CardDetails>
-									 <CustomerDetails>
-										 <BillingAddress>
-											<Address1>' . $trxData['Address1'] . '</Address1>
-											<Address2>' . $trxData['Address2'] . '</Address2>
-											<Address3>' . $trxData['Address3'] . '</Address3>
-											<Address4>' . $trxData['Address4'] . '</Address4>
-											<City>' . $trxData['City'] . '</City>
-											<State>' . $trxData['State'] . '</State>
-											<PostCode>' . $trxData['PostCode'] . '</PostCode>
-											<CountryCode>' . $trxData['CountryCode'] . '</CountryCode>
-										 </BillingAddress>
-										 <EmailAddress>' . $trxData['EmailAddress'] . '</EmailAddress>
-										 <PhoneNumber>' . $trxData['PhoneNumber'] . '</PhoneNumber>
-										 <CustomerIPAddress>' . $trxData['IPAddress'] . '</CustomerIPAddress>
-									 </CustomerDetails>
-								 </PaymentMessage>
-							 </CardDetailsTransaction>
-						 </soap:Body>
-					 </soap:Envelope>';
+                     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                         <soap:Body>
+                             <CardDetailsTransaction xmlns="https://www.thepaymentgateway.net/">
+                                 <PaymentMessage>
+                                     <MerchantAuthentication MerchantID="' . $trxData['MerchantID'] . '" Password="' . $trxData['Password'] . '" />
+                                     <TransactionDetails Amount="' . $trxData['Amount'] . '" CurrencyCode="' . $trxData['CurrencyCode'] . '">
+                                         <MessageDetails TransactionType="' . $trxData['TransactionType'] . '" />
+                                         <OrderID>' . $trxData['OrderID'] . '</OrderID>
+                                         <OrderDescription>' . $trxData['OrderDescription'] . '</OrderDescription>
+                                         <TransactionControl>
+                                            <EchoCardType>TRUE</EchoCardType>
+                                            <EchoAVSCheckResult>TRUE</EchoAVSCheckResult>
+                                            <EchoCV2CheckResult>TRUE</EchoCV2CheckResult>
+                                            <EchoAmountReceived>TRUE</EchoAmountReceived>
+                                            <DuplicateDelay>20</DuplicateDelay>
+                                         </TransactionControl>
+                                     </TransactionDetails>
+                                     <CardDetails>
+                                        <CardName>' . $trxData['CardName'] . '</CardName>
+                                        <CardNumber>' . $trxData['CardNumber'] . '</CardNumber>
+                                        <ExpiryDate Month="' . $trxData['ExpMonth'] . '" Year="' . $trxData['ExpYear'] . '" />
+                                        <CV2>' . $trxData['CV2'] . '</CV2>
+                                        <IssueNumber>' . $trxData['IssueNumber'] . '</IssueNumber>
+                                     </CardDetails>
+                                     <CustomerDetails>
+                                         <BillingAddress>
+                                            <Address1>' . $trxData['Address1'] . '</Address1>
+                                            <Address2>' . $trxData['Address2'] . '</Address2>
+                                            <Address3>' . $trxData['Address3'] . '</Address3>
+                                            <Address4>' . $trxData['Address4'] . '</Address4>
+                                            <City>' . $trxData['City'] . '</City>
+                                            <State>' . $trxData['State'] . '</State>
+                                            <PostCode>' . $trxData['PostCode'] . '</PostCode>
+                                            <CountryCode>' . $trxData['CountryCode'] . '</CountryCode>
+                                         </BillingAddress>
+                                         <EmailAddress>' . $trxData['EmailAddress'] . '</EmailAddress>
+                                         <PhoneNumber>' . $trxData['PhoneNumber'] . '</PhoneNumber>
+                                         <CustomerIPAddress>' . $trxData['IPAddress'] . '</CustomerIPAddress>
+                                     </CustomerDetails>
+                                 </PaymentMessage>
+                             </CardDetailsTransaction>
+                         </soap:Body>
+                     </soap:Envelope>';
         // @codingStandardsIgnoreEnd
 
         return $this->executeTransaction($headers, $xml);
@@ -122,7 +122,7 @@ class Psgw
 
         // @codingStandardsIgnoreStart
         $xml = '<?xml version="1.0" encoding="utf-8"?>
-					 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
                         <soap:Body>
                             <ThreeDSecureAuthentication xmlns="https://www.thepaymentgateway.net/">
                                 <ThreeDSecureMessage>
@@ -133,7 +133,7 @@ class Psgw
                                 </ThreeDSecureMessage>
                             </ThreeDSecureAuthentication>
                         </soap:Body>
-					 </soap:Envelope>';
+                     </soap:Envelope>';
         // @codingStandardsIgnoreEnd
 
         return $this->executeTransaction($headers, $xml);
@@ -165,29 +165,29 @@ class Psgw
 
         // @codingStandardsIgnoreStart
         $xml = '<?xml version="1.0" encoding="utf-8"?>
-					 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-						 <soap:Body>
-							 <CrossReferenceTransaction xmlns="https://www.thepaymentgateway.net/">
-								 <PaymentMessage>
-									 <MerchantAuthentication MerchantID="' . $trxData['MerchantID'] . '" Password="' . $trxData['Password'] . '" />
-									 <TransactionDetails' . $transactionDetails . '>
-										 <MessageDetails TransactionType="' . $trxData['TransactionType'] . '" NewTransaction="FALSE" CrossReference="' . $trxData['CrossReference'] . '" />
-										 <OrderID>' . $trxData['OrderID'] . '</OrderID>
-										 <OrderDescription>' . $trxData['OrderDescription'] . '</OrderDescription>
-										 <TransactionControl>
-											 <EchoCardType>FALSE</EchoCardType>
-											 <EchoAVSCheckResult>FALSE</EchoAVSCheckResult>
-											 <EchoCV2CheckResult>FALSE</EchoCV2CheckResult>
-											 <EchoAmountReceived>FALSE</EchoAmountReceived>
-											 <DuplicateDelay>10</DuplicateDelay>
-											 <AVSOverridePolicy>BPPF</AVSOverridePolicy>
-											 <ThreeDSecureOverridePolicy>FALSE</ThreeDSecureOverridePolicy>
-										 </TransactionControl>
-									 </TransactionDetails>
-								 </PaymentMessage>
-							 </CrossReferenceTransaction>
-						 </soap:Body>
-					 </soap:Envelope>';
+                     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                         <soap:Body>
+                             <CrossReferenceTransaction xmlns="https://www.thepaymentgateway.net/">
+                                 <PaymentMessage>
+                                     <MerchantAuthentication MerchantID="' . $trxData['MerchantID'] . '" Password="' . $trxData['Password'] . '" />
+                                     <TransactionDetails' . $transactionDetails . '>
+                                         <MessageDetails TransactionType="' . $trxData['TransactionType'] . '" NewTransaction="FALSE" CrossReference="' . $trxData['CrossReference'] . '" />
+                                         <OrderID>' . $trxData['OrderID'] . '</OrderID>
+                                         <OrderDescription>' . $trxData['OrderDescription'] . '</OrderDescription>
+                                         <TransactionControl>
+                                             <EchoCardType>FALSE</EchoCardType>
+                                             <EchoAVSCheckResult>FALSE</EchoAVSCheckResult>
+                                             <EchoCV2CheckResult>FALSE</EchoCV2CheckResult>
+                                             <EchoAmountReceived>FALSE</EchoAmountReceived>
+                                             <DuplicateDelay>10</DuplicateDelay>
+                                             <AVSOverridePolicy>BPPF</AVSOverridePolicy>
+                                             <ThreeDSecureOverridePolicy>FALSE</ThreeDSecureOverridePolicy>
+                                         </TransactionControl>
+                                     </TransactionDetails>
+                                 </PaymentMessage>
+                             </CrossReferenceTransaction>
+                         </soap:Body>
+                     </soap:Envelope>';
         // @codingStandardsIgnoreEnd
 
         return $this->executeTransaction($headers, $xml);
@@ -202,6 +202,7 @@ class Psgw
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
+    // phpcs:ignore Generic.Metrics.CyclomaticComplexity
     public function executeTransaction($headers, $xml)
     {
         $gatewayId             = 1;
@@ -232,15 +233,19 @@ class Psgw
                     'xml'     => $xml,
                 ];
 
-                $response = $this->executeHttpRequest($data);
-
-                if ($response->getStatus() === \Zend\Http\Response::STATUS_CODE_200) {
-                    $responseBody  = $response->getBody();
-                    $trxStatusCode = $this->getXmlValue('StatusCode', $responseBody, '[0-9]+');
-                    $trxMessage    = $this->getXmlValue('Message', $responseBody, '.+');
-                    if (!$this->shouldRetryTxn($trxStatusCode, $trxMessage)) {
-                        $validGatewayResponse = is_numeric($trxStatusCode);
+                try {
+                    $response = $this->executeHttpRequest($data);
+                    if ($response->getStatus() === \Zend\Http\Response::STATUS_CODE_200) {
+                        $responseBody  = $response->getBody();
+                        $trxStatusCode = $this->getXmlValue('StatusCode', $responseBody, '[0-9]+');
+                        $trxMessage    = $this->getXmlValue('Message', $responseBody, '.+');
+                        if (!$this->shouldRetryTxn($trxStatusCode, $trxMessage)) {
+                            $validGatewayResponse = is_numeric($trxStatusCode);
+                        }
                     }
+                } catch (\Exception $e) {
+                    // Swallows the exceptions thrown by Zend_Http_Client. No action is required.
+                    unset($e);
                 }
             } else {
                 $validGatewayResponse = false;

@@ -1,12 +1,12 @@
-Paymentsense Module for Magento 2 CE
-====================================
+Paymentsense Module for Magento 2 Open Source
+=============================================
 
-Payment module for Magento 2 Community Edition, allowing you to take payments via Paymentsense.
+Payment module for Magento 2 Open Source (Community Edition), allowing you to take payments via Paymentsense.
 
 Requirements
 ------------
 
-* Magento 2 Community Edition 2.x (tested up to 2.2.3)
+* Magento 2 Open Source 2.x.x (tested up to 2.2.6)
 * PCI-certified server using SSL/TLS (required for Direct and MOTO payment methods)
 
 Installation using Composer
@@ -85,6 +85,11 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 
 Changelog
 ---------
+
+##### 2.0.2
+### Changed
+- Order email sent only after successful payment. Emails for failed payments are no longer sent to the customer.
+
 
 ##### 2.0.1
 ### Added

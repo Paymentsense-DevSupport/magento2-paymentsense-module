@@ -30,7 +30,7 @@ trait BaseMethod
     use CrossReferenceTransactions;
 
     /**
-     * Retrieve payment method code
+     * Retrieves payment method code
      *
      * @return string
      */
@@ -58,5 +58,15 @@ trait BaseMethod
     public function canUseForCurrency($currencyCode)
     {
         return $this->getModuleHelper()->isCurrencyAllowed($this->getCode(), $currencyCode);
+    }
+
+    /**
+     * Sends the new order email to the customer
+     *
+     * @param  \Magento\Sales\Model\Order $order
+     */
+    public function sendNewOrderEmail($order)
+    {
+        $this->_orderSender->send($order);
     }
 }

@@ -54,7 +54,6 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
     public function execute()
     {
         $this->_method->getLogger()->info('Callback request from the Hosted Payment Form has been received.');
-        $message = '';
         if (!$this->getRequest()->isPost()) {
             $this->_method->getLogger()->warning('Non-POST callback request triggering HTTP status code 400.');
             $this->getResponse()->setHttpResponseCode(
@@ -64,6 +63,19 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
         }
 
         $trxStatusAndMessage = $this->_method->getTrxStatusAndMessage($this->getPostData());
+
+        if ($trxStatusAndMessage['TrxStatus'] !== TransactionStatus::INVALID) {
+            $order = $this->_method->getOrder($this->getPostData());
+            if ($order) {
+                $this->_method->getModuleHelper()->setOrderState($order, $trxStatusAndMessage['TrxStatus']);
+                $this->_method->updatePayment($order, $this->getPostData());
+
+                if ($trxStatusAndMessage['TrxStatus'] === TransactionStatus::SUCCESS) {
+                    $this->_method->sendNewOrderEmail($order);
+                }
+            }
+        }
+
         $this->processActions($trxStatusAndMessage);
         $this->_method->getLogger()->info('Callback request from the Hosted Payment Form has been processed.');
     }

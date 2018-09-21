@@ -386,25 +386,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function lookUpCaptureTransaction($payment)
     {
-        $transactionTypes = [
-            Transaction::TYPE_CAPTURE
-        ];
-        return $this->lookUpTransaction($payment, $transactionTypes);
-    }
-
-    /**
-     * Searches for a voidable transaction (Authorisation or Capture)
-     *
-     * @param \Magento\Payment\Model\InfoInterface $payment
-     * @return null|\Magento\Sales\Model\Order\Payment\Transaction
-     */
-    public function lookUpVoidableTransaction($payment)
-    {
-        $transactionTypes = [
-            Transaction::TYPE_CAPTURE,
-            Transaction::TYPE_AUTH
-        ];
-        return $this->lookUpTransaction($payment, $transactionTypes);
+        return $this->lookUpTransaction($payment, [Transaction::TYPE_CAPTURE]);
     }
 
     /**
