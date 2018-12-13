@@ -19,8 +19,6 @@
 
 namespace Paymentsense\Payments\Model;
 
-use Paymentsense\Payments\Model\Config;
-
 /**
  * Factory class used for the creating of class instances
  */

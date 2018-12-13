@@ -6,7 +6,7 @@ Payment module for Magento 2 Open Source (Community Edition), allowing you to ta
 Requirements
 ------------
 
-* Magento 2 Open Source 2.x.x (tested up to 2.2.6)
+* Magento 2 Open Source 2 (tested up to 2.3.0)
 * PCI-certified server using SSL/TLS (required for Direct and MOTO payment methods)
 
 Installation using Composer
@@ -85,6 +85,15 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 
 Changelog
 ---------
+
+##### 2.0.3
+### Added
+- Support of Magento 2.3.x. CSRF protection compliance.
+- Module information reporting feature
+
+### Changed
+- Logos
+
 
 ##### 2.0.2
 ### Changed

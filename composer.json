@@ -2,7 +2,7 @@
     "name": "paymentsense/magento2-module",
     "description": "Paymentsense Module for Magento 2 Open Source (Community Edition)",
     "type": "magento2-module",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "license": [
         "GPL-3.0"
     ],
@@ -13,9 +13,6 @@
             "homepage": "https://www.paymentsense.co.uk"
         }
     ],
-    "require": {
-        "magento/framework": "101.0.*"
-    },
     "keywords": [
         "paymentsense",
         "payment_module",

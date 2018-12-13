@@ -146,8 +146,6 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @param float $amount
      * @return $this
-     *
-     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function order(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {

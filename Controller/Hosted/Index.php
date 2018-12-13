@@ -19,7 +19,6 @@
 
 namespace Paymentsense\Payments\Controller\Hosted;
 
-use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 use Paymentsense\Payments\Model\Psgw\TransactionStatus;
 
 /**

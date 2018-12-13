@@ -24,7 +24,7 @@ use Magento\Sales\Model\Order;
 /**
  * Abstract action class implementing redirect actions
  */
-abstract class CheckoutAction extends \Paymentsense\Payments\Controller\Action
+abstract class CheckoutAction extends CsrfAwareAction
 {
     /**
      * @var \Magento\Checkout\Model\Session

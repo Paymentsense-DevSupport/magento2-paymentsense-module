@@ -1,3 +1,4 @@
+<?php
 /*
  * Copyright (C) 2018 Paymentsense Ltd.
  *
@@ -16,7 +17,22 @@
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
-.paymentsense-section .heading {background: url("images/paymentsense.png") no-repeat 0 50% / 18rem auto; padding-left: 20rem;}
-.paymentsense-section .button-container {float: right;}
-.paymentsense-section .config-alt.card-logos {background: url("images/paymentsense-logos.png") no-repeat; height: 26px; margin: 0.5rem 0 0;}
-.paymentsense-section .config-alt.card-logos-no-amex {background: url("images/paymentsense-logos-no-amex.png") no-repeat; height: 26px; margin: 0.5rem 0 0;}
+namespace Paymentsense\Payments\Controller;
+
+/**
+ * Abstract CsrfAwareAction class with CSRF support
+ */
+abstract class CsrfAwareAction extends Action implements \Magento\Framework\App\CsrfAwareActionInterface
+{
+    // @codingStandardsIgnoreLine
+    public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
+    {
+        return true;
+    }
+
+    // @codingStandardsIgnoreLine
+    public function createCsrfValidationException(\Magento\Framework\App\RequestInterface $request): ?\Magento\Framework\App\Request\InvalidRequestException
+    {
+        return null;
+    }
+}
