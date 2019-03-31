@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -25,6 +25,8 @@ use Paymentsense\Payments\Model\Psgw\TransactionStatus;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 use Paymentsense\Payments\Model\Traits\BaseMethod;
 use Magento\Sales\Model\Order;
+use Magento\Checkout\Model\Session;
+use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 
 /**
  * Hosted payment method model
@@ -71,6 +73,8 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
      * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
      * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
      * @param array $data
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
@@ -81,9 +85,9 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
         \Magento\Payment\Helper\Data $paymentData,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Checkout\Model\Session $checkoutSession,
+        Session $checkoutSession,
         \Paymentsense\Payments\Helper\Data $moduleHelper,
-        \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
+        OrderSender $orderSender,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
@@ -107,6 +111,8 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
         $this->_moduleHelper    = $moduleHelper;
         $this->_orderSender     = $orderSender;
         $this->_configHelper    = $this->getModuleHelper()->getMethodConfig($this->getCode());
+
+        $this->configureCrossRefTxnAvailability();
     }
 
     /**
@@ -163,6 +169,8 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
      *
      * @param  \Magento\Sales\Model\Order $order
      * @return array
+     *
+     * @throws \Exception
      */
     public function buildHostedFormData($order)
     {

@@ -4,7 +4,6 @@
     <rule ref="EcgM2"/>
     <rule ref="MEQP2">
         <exclude name="MEQP2.PHP.ProtectedClassMember.FoundProtected" />
-        <exclude name="MEQP2.Classes.MutableObjects.MutableObjects" />
         <exclude name="MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation" />
         <exclude name="MEQP2.Classes.ConstructorOperations.CustomOperationsFound" />
         <exclude name="MEQP2.Classes.ObjectManager.ObjectManagerFound" />

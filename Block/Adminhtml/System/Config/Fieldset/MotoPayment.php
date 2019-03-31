@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,29 +13,42 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 namespace Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset;
 
 use Paymentsense\Payments\Model\Method\Moto;
+use Magento\Backend\Model\Auth\Session;
 
 /**
  * Renderer for the MOTO method in the admin panel
  *
  * @package Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset
  */
-class MotoPayment extends \Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset\Base\Payment
+class MotoPayment extends Base\Payment
 {
     /**
-     * Retrieves the payment card logos CSS class
-     *
-     * @return string
+     * @var Moto
      */
-    protected function getPaymentCardLogosCssClass()
-    {
-        $method = $this->getObjectManager()->create(Moto::class);
-        return $method->getConfigData('allow_amex') ? "card-logos" : "card-logos-no-amex";
+    protected $method;
+
+    /**
+     * @param \Magento\Backend\Block\Context $context
+     * @param \Magento\Backend\Model\Auth\Session $authSession
+     * @param \Magento\Framework\View\Helper\Js $jsHelper
+     * @param \Magento\Framework\Url $urlHelper
+     * @param Moto $method
+     */
+    public function __construct(
+        \Magento\Backend\Block\Context $context,
+        Session $authSession,
+        \Magento\Framework\View\Helper\Js $jsHelper,
+        \Magento\Framework\Url $urlHelper,
+        Moto $method
+    ) {
+        $this->method = $method;
+        parent::__construct($context, $authSession, $jsHelper, $urlHelper);
     }
 }

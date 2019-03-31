@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -26,8 +26,7 @@ use Paymentsense\Payments\Helper\Logger;
  */
 trait BaseMethod
 {
-    use CardDetailsTransactions;
-    use CrossReferenceTransactions;
+    use Transactions;
 
     /**
      * Retrieves payment method code
@@ -43,6 +42,8 @@ trait BaseMethod
      * Creates logger
      *
      * @return \Magento\Payment\Model\Method\Logger
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function createLogger()
     {
@@ -54,6 +55,8 @@ trait BaseMethod
      *
      * @param string $currencyCode
      * @return bool
+     *
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function canUseForCurrency($currencyCode)
     {
@@ -68,5 +71,37 @@ trait BaseMethod
     public function sendNewOrderEmail($order)
     {
         $this->_orderSender->send($order);
+    }
+
+    /**
+     * Determines whether the payment method is enabled
+     *
+     * @return bool
+     */
+    public function isEnabled()
+    {
+        return $this->getConfigHelper()->isMethodActive($this->getCode());
+    }
+
+    /**
+     * Determines whether the payment method is configured
+     *
+     * @return bool
+     */
+    public function isConfigured()
+    {
+        return $this->getConfigHelper()->isMethodConfigured($this->getCode());
+    }
+
+    /**
+     * Determines whether the store is secure
+     *
+     * @return bool
+     *
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function isSecure()
+    {
+        return $this->getModuleHelper()->isStoreSecure();
     }
 }

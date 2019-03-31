@@ -20,47 +20,61 @@
 namespace Paymentsense\Payments\Controller\Hosted;
 
 /**
- * Provides data for the form redirecting to the Hosted Payment Form
+ * Handles the payment method status request
  *
  * @package Paymentsense\Payments\Controller\Hosted
  */
-class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
+class Status extends \Paymentsense\Payments\Controller\StatusAction
 {
     /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Magento\Sales\Model\OrderFactory $orderFactory
+     * @param \Magento\Backend\Model\Session $backendSession
      * @param \Paymentsense\Payments\Model\Method\Hosted
      */
     // @codingStandardsIgnoreStart
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Sales\Model\OrderFactory $orderFactory,
+        \Magento\Backend\Model\Session $backendSession,
         \Paymentsense\Payments\Model\Method\Hosted $method
     ) {
-        parent::__construct($context, $logger, $checkoutSession, $orderFactory, $method);
+        parent::__construct($context, $logger, $backendSession, $method);
     }
     // @codingStandardsIgnoreEnd
 
     /**
-     * Handles ajax requests and provides the form data for redirecting to the Hosted Payment Form
-     * Generates application/json response containing the form data in JSON format
-     *
-     * @throws \Exception
+     * Handles the payment method status request
+     * Outputs the statusText and className in JSON format
      */
     public function execute()
     {
-        $order = $this->getOrder();
-        if (isset($order)) {
-            $data = $this->_method->buildHostedFormData($order);
-            $this->getResponse()
-                ->setHeader('Content-Type', 'application/json')
-                ->setBody(json_encode($data));
-        } else {
-            $this->redirectToCheckoutOnePageSuccess();
+        $status = $this->getStatus();
+        $connection = $this->getConnection();
+        $this->getResponse()
+            ->setHeader('Content-Type', 'application/json')
+            ->setBody(json_encode(array_merge($status, $connection)));
+    }
+
+    /**
+     * Gets the payment method status
+     */
+    private function getStatus()
+    {
+        switch (true) {
+            case !$this->_method->isConfigured():
+                $result = [
+                    'statusText' => __('Unavailable (Payment method not configured)'),
+                    'statusClassName' => 'red-text'
+                ];
+                break;
+            default:
+                $result = [
+                    'statusText' => __('Enabled'),
+                    'statusClassName' => 'green-text'
+                ];
+                break;
         }
+        return $result;
     }
 }

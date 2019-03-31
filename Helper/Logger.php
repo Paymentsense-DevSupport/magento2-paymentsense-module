@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -35,6 +35,8 @@ class Logger extends \Magento\Payment\Model\Method\Logger
 
     /**
      * @param mixed $method
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function __construct($method)
     {

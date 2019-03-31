@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (C) 2018 Paymentsense Ltd.
+Copyright (C) 2019 Paymentsense Ltd.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 @author      Paymentsense
-@copyright   2018 Paymentsense Ltd.
+@copyright   2019 Paymentsense Ltd.
 @license     https://www.gnu.org/licenses/gpl-3.0.html
 -->
 <include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
@@ -218,6 +218,15 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
             <can_be_empty>0</can_be_empty>
+        </field>
+        <field id="port_4430_not_open" translate="label" type="select" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="0">
+            <label>Port 4430 is NOT open on my server (safe mode with refunds disabled):</label>
+            <tooltip><![CDATA[Cross reference transactions (COLLECTION, REFUND, VOID) require outbound port 4430 to be open. When port 4430 is not open this setting should be set to "Yes" to disable these transactions.]]></tooltip>
+            <config_path>payment/paymentsense_hosted/port_4430_not_open</config_path>
+            <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+            <depends>
+                <field id="active">1</field>
+            </depends>
         </field>
     </group>
 </include>

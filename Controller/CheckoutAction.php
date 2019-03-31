@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,13 +13,14 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 namespace Paymentsense\Payments\Controller;
 
 use Magento\Sales\Model\Order;
+use Magento\Checkout\Model\Session;
 
 /**
  * Abstract action class implementing redirect actions
@@ -37,12 +38,7 @@ abstract class CheckoutAction extends CsrfAwareAction
     protected $_orderFactory;
 
     /**
-     * @var \Paymentsense\Payments\Helper\Checkout
-     */
-    protected $_checkoutHelper;
-
-    /**
-     * @var \Paymentsense\Payments\Model\Method\Hosted|\Paymentsense\Payments\Model\Method\Direct
+     * @var \Paymentsense\Payments\Model\Method\Hosted|\Paymentsense\Payments\Model\Method\Direct|\Paymentsense\Payments\Model\Method\Moto
      */
     protected $_method;
 
@@ -56,7 +52,7 @@ abstract class CheckoutAction extends CsrfAwareAction
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Checkout\Model\Session $checkoutSession,
+        Session $checkoutSession,
         \Magento\Sales\Model\OrderFactory $orderFactory,
         $method
     ) {
@@ -109,6 +105,9 @@ abstract class CheckoutAction extends CsrfAwareAction
      * Cancels the current order and restores the quote
      *
      * @param string $comment
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Exception
      */
     protected function cancelOrderAndRestoreQuote($comment)
     {
@@ -133,6 +132,8 @@ abstract class CheckoutAction extends CsrfAwareAction
      * Handles Failure Action
      *
      * @param string $message
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function executeFailureAction($message)
     {
@@ -155,6 +156,8 @@ abstract class CheckoutAction extends CsrfAwareAction
      * Handles Cancel Action
      *
      * @param string $message
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function executeCancelAction($message)
     {

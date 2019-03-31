@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -160,7 +160,7 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
         return !empty($this->getMerchantId()) &&
             !empty($this->getPassword()) &&
             !empty($this->getTransactionType()) &&
-            ($methodCode != \Paymentsense\Payments\Model\Method\Hosted::CODE || !empty($this->getPresharedKey()));
+            ($methodCode != Method\Hosted::CODE || !empty($this->getPresharedKey()));
     }
 
     /**
@@ -376,5 +376,15 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
     public function getLogLevel()
     {
         return (int) $this->getValue('log_level');
+    }
+
+    /**
+     * Gets Port 4430 is NOT open on my server
+     *
+     * @return string
+     */
+    public function getPort4430NotOpen()
+    {
+        return $this->getValue('port_4430_not_open');
     }
 }

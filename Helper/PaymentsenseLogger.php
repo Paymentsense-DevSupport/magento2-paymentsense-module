@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -45,6 +45,8 @@ class PaymentsenseLogger extends \Monolog\Logger
 
     /**
      * Gets Log level
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getLogLevel()
     {
@@ -59,6 +61,8 @@ class PaymentsenseLogger extends \Monolog\Logger
      * @param  string  $message The log message
      * @param  array   $context The log context
      * @return boolean Whether the record has been processed
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function error($message, array $context = [])
     {
@@ -77,6 +81,8 @@ class PaymentsenseLogger extends \Monolog\Logger
      * @param  string  $message The log message
      * @param  array   $context The log context
      * @return boolean Whether the record has been processed
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function warning($message, array $context = [])
     {
@@ -95,6 +101,8 @@ class PaymentsenseLogger extends \Monolog\Logger
      * @param  string  $message The log message
      * @param  array   $context The log context
      * @return boolean Whether the record has been processed
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function info($message, array $context = [])
     {

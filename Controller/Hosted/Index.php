@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -49,6 +49,8 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
 
     /**
      * Processes the response from the Hosted Payment Form
+     *
+     * @throws \Exception
      */
     public function execute()
     {
@@ -83,6 +85,8 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
      * Processes actions based on the transaction status
      *
      * @param array $trxStatusAndMessage Array containing transaction status and message
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function processActions($trxStatusAndMessage)
     {

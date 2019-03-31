@@ -1,7 +1,13 @@
 <script>
     require(['Paymentsense_Payments/js/view/acs']);
     //<![CDATA[
-    psAcsData = <?php echo $block->getAcsData(); ?>;
+    psAcsData = <?php
+    try {
+        echo $block->getAcsData();
+    }  catch (\Magento\Framework\Exception\LocalizedException $e) {
+        echo 'null';
+    }
+    ?>;
     //]]>
 </script>
 <div id="contentDiv"></div>

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,11 +13,13 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 namespace Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset\Base;
+
+use Magento\Backend\Model\Auth\Session;
 
 /**
  * Base renderer for all payment methods in the admin panel
@@ -27,23 +29,25 @@ namespace Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset\Base;
 abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
 {
     /**
-     * @var \Magento\Framework\ObjectManagerInterface
+     * @var \Paymentsense\Payments\Model\Method\Hosted|\Paymentsense\Payments\Model\Method\Direct|\Paymentsense\Payments\Model\Method\Moto
      */
-    protected $_objectManager;
+    protected $method;
+
+    public $_urlHelper;
 
     /**
      * @param \Magento\Backend\Block\Context $context
      * @param \Magento\Backend\Model\Auth\Session $authSession
+     * @param \Magento\Framework\Url $urlHelper
      * @param \Magento\Framework\View\Helper\Js $jsHelper
-     * @param \Magento\Framework\ObjectManagerInterface $objectManager
      */
     public function __construct(
         \Magento\Backend\Block\Context $context,
-        \Magento\Backend\Model\Auth\Session $authSession,
+        Session $authSession,
         \Magento\Framework\View\Helper\Js $jsHelper,
-        \Magento\Framework\ObjectManagerInterface $objectManager
+        \Magento\Framework\Url $urlHelper
     ) {
-        $this->_objectManager = $objectManager;
+        $this->_urlHelper = $urlHelper;
         parent::__construct($context, $authSession, $jsHelper);
     }
 
@@ -52,7 +56,10 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
      *
      * @return string
      */
-    abstract protected function getPaymentCardLogosCssClass();
+    public function getPaymentCardLogosCssClass()
+    {
+        return $this->method->getConfigData('allow_amex') ? "card-logos" : "card-logos-no-amex";
+    }
 
     /**
      * Adds custom css class
@@ -70,11 +77,15 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
      *
      * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
      * @return string
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function _getHeaderTitleHtml($element)
     {
-        $html = '<div class="config-heading">';
         $htmlId = $element->getHtmlId();
+        $initialStatus = $this->method->isEnabled() ? __('Testing...') : __('Disabled');
+        $initialConnection = $this->method->isEnabled() ? __('Testing...') : __('Unknown');
+        $html = '<div class="config-heading">';
         $html .= '<div class="button-container"><button type="button"' .
             ' class="button action-configure' .
             '" id="' .
@@ -94,10 +105,16 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
         $html .= '<div class="heading"><strong>' . $element->getLegend() . '</strong>';
 
         if ($element->getComment()) {
-            $html .= '<span class="heading-intro">' . $element->getComment() . '</span>';
+            $html .= '<span>' . $element->getComment() . '</span>';
         }
         $html .= '<div class="config-alt ' . $this->getPaymentCardLogosCssClass() . '"></div>';
-        $html .= '</div></div>';
+        $html .= '<div class="statusDiv">';
+        $html .= '<span>' . __('Payment Method Status:') . ' </span>';
+        $html .= '<span id="' . $htmlId . '-status">' . $initialStatus . '</span>';
+        $html .= '</div><div class="connectionDiv">';
+        $html .= '<span>' . __('Gateway Connection:') . ' </span>';
+        $html .= '<span id="' . $htmlId . '-connection">' . $initialConnection . '</span>';
+        $html .= '</div></div></div>';
 
         return $html;
     }
@@ -133,21 +150,66 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
     // @codingStandardsIgnoreLine
     protected function _getExtraJs($element)
     {
-        $script = "require(['jquery', 'prototype'], function(jQuery){
+        $htmlId = $element->getHtmlId();
+        $code = $this->method->getCode();
+        $route = str_replace('_', '/', $code) . '/status';
+        $statusUrl = $this->_urlHelper->getUrl($route);
+
+        $script = '';
+        if ($this->method->isEnabled()) {
+            $script = "
+            getStatus();
+
+            /**
+             * Gets payment method status and connection
+             */
+            function getStatus()
+            {
+                var paymentMethodStatusUrl = '" . $statusUrl . "';
+                $.ajax({
+                    url: paymentMethodStatusUrl,
+                    type: \"GET\",
+                    success: showStatus,
+                    error: showUnknownStatus
+                });
+            }
+
+            /**
+             * Shows the status and connection
+             */
+            function showStatus(data)
+            {
+                if (data.statusText != null) {
+                    var statusSpan = document.getElementById('" . $htmlId . "-status');
+                    var connectionSpan = document.getElementById('" . $htmlId . "-connection');
+                    statusSpan.innerHTML = data.statusText;
+                    statusSpan.className = data.statusClassName;
+                    connectionSpan.innerHTML = data.connectionText;
+                    connectionSpan.className = data.connectionClassName;
+
+                } else {
+                    showUnknownStatus(data);
+                }
+            }
+
+            /**
+             * Shows an unknown status and connection
+             */
+            function showUnknownStatus(data)
+            {
+                var statusSpan = document.getElementById('" . $htmlId . "-status');
+                var connectionSpan = document.getElementById('" . $htmlId . "-connection');
+                statusSpan.innerHTML = '" . __('Unknown') . "';
+                connectionSpan.innerHTML = '" . __('Unknown') . "';
+            }            
+            ";
+        }
+
+        $script = "require(['jquery', 'prototype'], function($){
             window.togglePaymentsenseMethod = function (id, url) {
                 Fieldset.toggleCollapse(id, url);
-            }
+            }" . $script . "
         });";
         return $this->_jsHelper->getScript($script);
-    }
-
-    /**
-     * Gets an instance of the Magento Object Manager
-     *
-     * @return \Magento\Framework\ObjectManagerInterface
-     */
-    protected function getObjectManager()
-    {
-        return $this->_objectManager;
     }
 }

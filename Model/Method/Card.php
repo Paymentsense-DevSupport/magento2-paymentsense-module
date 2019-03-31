@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -25,6 +25,7 @@ use Paymentsense\Payments\Model\Psgw\TransactionType;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 use Paymentsense\Payments\Model\Traits\BaseMethod;
 use Magento\Sales\Model\Order\Payment\Transaction;
+use Magento\Checkout\Model\Session;
 
 /**
  * Abstract Card class used by the Direct and MOTO payment methods
@@ -71,6 +72,9 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
      * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
      * @param array $data
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
@@ -81,7 +85,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         \Magento\Payment\Helper\Data $paymentData,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Checkout\Model\Session $checkoutSession,
+        Session $checkoutSession,
         \Paymentsense\Payments\Helper\Data $moduleHelper,
         \Magento\Framework\Module\ModuleListInterface $moduleList,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
@@ -127,6 +131,8 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * Gets the payment action based on the transaction type
      *
      * @return string
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getConfigPaymentAction()
     {
@@ -398,6 +404,8 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * @param \Magento\Sales\Model\Order $order
      * @param array $postData The POST variables received from the ACS
      * @return array Array containing StatusCode and Message
+     *
+     * @throws \Exception
      */
     public function process3dsResponse($order, $postData)
     {
@@ -470,6 +478,8 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      *
      * @param \Magento\Quote\Api\Data\CartInterface|null $quote
      * @return bool
+     *
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
     {

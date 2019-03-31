@@ -6,8 +6,9 @@ Payment module for Magento 2 Open Source (Community Edition), allowing you to ta
 Requirements
 ------------
 
-* Magento 2 Open Source 2 (tested up to 2.3.0)
+* Magento 2 Open Source 2 (tested up to 2.3.1)
 * PCI-certified server using SSL/TLS (required for Direct and MOTO payment methods)
+* Open outbound port 4430 in order to use the Direct and MOTO payment methods and for performing cross reference transactions (Collection, Refund and Void)
 
 Installation using Composer
 ---------------------------
@@ -86,33 +87,44 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
-##### 2.0.3
-### Added
+### 2.0.4
+##### Added
+- Extended module information feature
+- Payment method status on the Payments Methods configuration page
+- Gateway connection status on the Payments Methods configuration page
+- "Port 4430 is NOT open on my server (safe mode with refunds disabled)" configuration setting disabling the cross reference transactions (Paymentsense Hosted)
+
+##### Removed
+- gw3 gateway entry point
+
+
+### 2.0.3
+##### Added
 - Support of Magento 2.3.x. CSRF protection compliance.
 - Module information reporting feature
 
-### Changed
+##### Changed
 - Logos
 
 
-##### 2.0.2
-### Changed
+### 2.0.2
+##### Changed
 - Order email sent only after successful payment. Emails for failed payments are no longer sent to the customer.
 
 
-##### 2.0.1
-### Added
+### 2.0.1
+##### Added
 - Configurable logging
 - Code optimisation and rework
 
-### Changed
+##### Changed
 - Status for orders before payment as "Pending Payment"
 
-### Fixed
+##### Fixed
 - Typos
 
 
-##### 2.0.0
+### 2.0.0
 Initial Release
 
 Support

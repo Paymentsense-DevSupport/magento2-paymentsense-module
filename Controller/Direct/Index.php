@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -21,6 +21,7 @@ namespace Paymentsense\Payments\Controller\Direct;
 
 use Paymentsense\Payments\Controller\Action;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
+use Magento\Checkout\Model\Session;
 
 /**
  * Front Controller for Paymentsense Direct method
@@ -46,7 +47,7 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Checkout\Model\Session $checkoutSession,
+        Session $checkoutSession,
         \Magento\Sales\Model\OrderFactory $orderFactory,
         \Paymentsense\Payments\Model\Method\Direct $method
     ) {
@@ -58,6 +59,8 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
      * Handles the new orders placed
      *
      * @return null|\Magento\Framework\View\Result\Page
+     *
+     * @throws \Exception
      */
     public function execute()
     {
@@ -95,6 +98,8 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
 
     /**
      * Processes the response from the ACS (Access Control Server)
+     *
+     * @throws \Exception
      */
     private function processAcsResponse()
     {
@@ -127,6 +132,8 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
 
     /**
      * Performs redirection based on the response from the ACS (Access Control Server)
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function process3dsComplete()
     {
@@ -141,6 +148,9 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
 
     /**
      * Processes the errors appeared during the 3D Secure authentication
+     *
+     * @throws \Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function process3dsError()
     {
@@ -154,6 +164,9 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
 
     /**
      * Processes the cancellation during the 3D Secure authentication
+     *
+     * @throws \Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function process3dsCancel()
     {
@@ -170,6 +183,8 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
      * If the card is enrolled in a 3-D Secure scheme a redirect to the ACS will be made
      *
      * @return null|\Magento\Framework\View\Result\Page
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function processCardDetailsTxnReturn()
     {

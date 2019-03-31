@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,13 +13,14 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 namespace Paymentsense\Payments\Model\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Checkout\Model\Session;
 
 /**
  * Observer for handling Webapi exceptions on the checkout page.
@@ -51,7 +52,7 @@ class ControllerFrontSendResponseBefore implements ObserverInterface
     public function __construct(
         \Paymentsense\Payments\Helper\Data $moduleHelper,
         \Magento\Framework\Webapi\ErrorProcessor $errorProcessor,
-        \Magento\Checkout\Model\Session $checkoutSession
+        Session $checkoutSession
     ) {
         $this->_moduleHelper = $moduleHelper;
         $this->_errorProcessor = $errorProcessor;

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -160,6 +160,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param bool|null $secure
      * @param int|null $storeId
      * @return string
+     *
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getUrl($moduleCode, $controller, $queryParams = null, $secure = null, $storeId = null)
     {
@@ -180,6 +182,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * Gets the return URL where the customer will be redirected from the Hosted Payment Form
      *
      * @return string
+     *
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getHostedFormCallbackUrl()
     {
@@ -196,6 +200,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param string $methodCode
      * @return \Paymentsense\Payments\Model\Config
+     *
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getMethodConfig($methodCode)
     {
@@ -241,6 +247,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param $storeId
      * @return bool
+     *
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function isStoreSecure($storeId = null)
     {
@@ -267,6 +275,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param \Magento\Sales\Model\Order\Payment\Transaction $transaction
      * @param array $response
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function setTransactionAdditionalInfo($transaction, $response)
     {
@@ -295,6 +305,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param \Magento\Sales\Model\Order $order
      * @param string $status
      * @param string $message
+     *
+     * @throws \Exception
      */
     public function setOrderState($order, $status, $message = '')
     {
@@ -449,6 +461,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param string $methodCode
      * @param string $currencyCode
      * @return bool
+     *
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function isCurrencyAllowed($methodCode, $currencyCode)
     {

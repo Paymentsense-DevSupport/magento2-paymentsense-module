@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -25,9 +25,9 @@ use Paymentsense\Payments\Model\Psgw\TransactionType;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 
 /**
- * Trait for processing of Cross Reference Transactions
+ * Trait for processing transactions
  */
-trait CrossReferenceTransactions
+trait Transactions
 {
     /**
      * @var \Paymentsense\Payments\Model\Config
@@ -309,6 +309,8 @@ trait CrossReferenceTransactions
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @param float $amount
      * @return $this
+     *
+     * @throws \Magento\Framework\Webapi\Exception
      */
     public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
@@ -345,6 +347,8 @@ trait CrossReferenceTransactions
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @param float $amount
      * @return $this
+     *
+     * @throws \Magento\Framework\Webapi\Exception
      */
     public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
@@ -380,6 +384,8 @@ trait CrossReferenceTransactions
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @return $this
+     *
+     * @throws \Magento\Framework\Webapi\Exception
      */
     public function void(\Magento\Payment\Model\InfoInterface $payment)
     {
@@ -415,9 +421,83 @@ trait CrossReferenceTransactions
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
      * @return $this
+     *
+     * @throws \Magento\Framework\Webapi\Exception
      */
     public function cancel(\Magento\Payment\Model\InfoInterface $payment)
     {
         return $this->void($payment);
+    }
+
+    /**
+     * Updates payment info and registers Card Details Transactions
+     *
+     * @param \Magento\Sales\Model\Order $order
+     * @param array $response An array containing transaction response data from the gateway
+     *
+     * @throws \Exception
+     */
+    public function updatePayment($order, $response)
+    {
+        $transactionID     = $response['CrossReference'];
+        $payment           = $order->getPayment();
+        $lastTransactionId = $payment->getLastTransId();
+        $payment->setMethod($this->getCode());
+        $payment->setLastTransId($transactionID);
+        $payment->setTransactionId($transactionID);
+        $payment->setParentTransactionId($lastTransactionId);
+        $payment->setShouldCloseParentTransaction(true);
+        $payment->setIsTransactionPending($response['StatusCode'] !== TransactionResultCode::SUCCESS);
+        $payment->setIsTransactionClosed($response['TransactionType'] === TransactionType::SALE);
+        $this->getModuleHelper()->setPaymentTransactionAdditionalInfo($payment, $response);
+        if ($response['StatusCode'] === TransactionResultCode::SUCCESS) {
+            if ($response['TransactionType'] === TransactionType::SALE) {
+                $payment->registerCaptureNotification($response['Amount'] / 100);
+            } else {
+                $payment->registerAuthorizationNotification($response['Amount'] / 100);
+            }
+        }
+        $order->save();
+    }
+
+    /**
+     * Performs GetGatewayEntryPoints transaction
+     *
+     * @return array
+     */
+    public function performGetGatewayEntryPointsTxn()
+    {
+        $config            = $this->getConfigHelper();
+        $objectManager     = $this->getModuleHelper()->getObjectManager();
+        $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
+        $psgw              = new Psgw($zendClientFactory);
+        $trxData           = [
+            'MerchantID' => $config->getMerchantId(),
+            'Password'   => $config->getPassword(),
+        ];
+
+        $psgw->setTrxMaxAttempts(1);
+        return $psgw->performGetGatewayEntryPointsTxn($trxData);
+    }
+
+    /**
+     * Checks whether the plugin can connect to the gateway by performing GetGatewayEntryPoints transaction
+     *
+     * @return boolean
+     */
+    public function canConnect()
+    {
+        $response = $this->performGetGatewayEntryPointsTxn();
+        return false !== $response['StatusCode'];
+    }
+
+    /**
+     * Configures the availability of the cross reference transactions (COLLECTION, REFUND, VOID)
+     * based on the configuration setting "Port 4430 is NOT open on my server"
+     */
+    public function configureCrossRefTxnAvailability()
+    {
+        $port4430IsNotOpen = (bool) $this->getConfigHelper()->getPort4430NotOpen();
+        $this->_canCapture = $this->_canRefund = $this->_canVoid = ! $port4430IsNotOpen;
     }
 }

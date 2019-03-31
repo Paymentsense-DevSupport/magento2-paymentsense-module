@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -26,8 +26,6 @@ namespace Paymentsense\Payments\Controller\Info;
  */
 class Index extends \Paymentsense\Payments\Controller\CsrfAwareAction
 {
-    const MODULE_NAME = 'Paymentsense Module for Magento 2 Open Source';
-
     const TYPE_APPLICATION_JSON = 'application/json';
     const TYPE_TEXT_PLAIN       = 'text/plain';
 
@@ -36,62 +34,51 @@ class Index extends \Paymentsense\Payments\Controller\CsrfAwareAction
      *
      * @var array
      */
-    protected $contentTypes = [
+    private $contentTypes = [
         'json' => self::TYPE_APPLICATION_JSON,
         'text' => self::TYPE_TEXT_PLAIN
     ];
 
     /**
-     * @var \Magento\Framework\Module\ModuleListInterface
+     * @var \Paymentsense\Payments\Model\ModuleInfo
      */
-    protected $moduleList;
-
-    /**
-     * @var \Magento\Framework\App\ProductMetadataInterface
-     */
-    protected $productMetadata;
+    private $method;
 
     /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Framework\Module\ModuleListInterface
-     * @param \Magento\Framework\App\ProductMetadataInterface
+     * @param \Paymentsense\Payments\Model\ModuleInfo
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\Module\ModuleListInterface $moduleListInterface,
-        \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface
+        \Paymentsense\Payments\Model\ModuleInfo $method
     ) {
-        $this->moduleList      = $moduleListInterface;
-        $this->productMetadata = $productMetadataInterface;
+        $this->method = $method;
         parent::__construct($context, $logger);
     }
 
     /**
-     * Handles the request
+     * Handles the module information request
      */
     public function execute()
     {
-        $info = [
-            'Module Name'              => $this->getModuleName(),
-            'Module Installed Version' => $this->getModuleInstalledVersion(),
-            'Magento Version'          => $this->getMagentoVersion(),
-            'PHP Version'              => $this->getPHPVersion()
-        ];
-        $this->outputInfo($info);
+        $extendedInfoRequest = 'true' === $this->getRequest()->getParam('extended_info');
+        $outputFormat = $this->getRequest()->getParam('output');
+        $info = $this->method->getInfo($extendedInfoRequest);
+        $this->outputInfo($info, $outputFormat);
     }
 
     /**
      * Outputs module information
      *
-     * @param array $info
+     * @param array $info Module information
+     * @param string $outputFormat Output format
      */
-    private function outputInfo($info)
+    private function outputInfo($info, $outputFormat)
     {
-        $output = $this->getRequest()->getParam('output');
-        $contentType = array_key_exists($output, $this->contentTypes)
-            ? $this->contentTypes[$output]
+        $contentType = array_key_exists($outputFormat, $this->contentTypes)
+            ? $this->contentTypes[$outputFormat]
             : self::TYPE_TEXT_PLAIN;
 
         switch ($contentType) {
@@ -100,7 +87,7 @@ class Index extends \Paymentsense\Payments\Controller\CsrfAwareAction
                 break;
             case self::TYPE_TEXT_PLAIN:
             default:
-                $body = $this->convertArrayToString($info);
+                $body = $this->method->convertArrayToString($info);
                 break;
         }
 
@@ -109,63 +96,5 @@ class Index extends \Paymentsense\Payments\Controller\CsrfAwareAction
             ->setHeader('Pragma', 'no-cache', true)
             ->setHeader('Content-Type', $contentType)
             ->setBody($body);
-    }
-
-    /**
-     * Converts an array to string
-     *
-     * @param array $arr
-     * @return string
-     */
-    private function convertArrayToString($arr)
-    {
-        $result = '';
-        foreach ($arr as $key => $value) {
-            if ($result !== '') {
-                $result .= PHP_EOL;
-            }
-            $result .= $key . ': ' . $value;
-        }
-        return $result;
-    }
-
-    /**
-     * Gets module name
-     *
-     * @return string
-     */
-    private function getModuleName()
-    {
-        return self::MODULE_NAME;
-    }
-
-    /**
-     * Gets module installed version
-     *
-     * @return string
-     */
-    private function getModuleInstalledVersion()
-    {
-        return $this->moduleList->getOne('Paymentsense_Payments')['setup_version'];
-    }
-
-    /**
-     * Gets Magento version
-     *
-     * @return string
-     */
-    private function getMagentoVersion()
-    {
-        return $this->productMetadata->getVersion();
-    }
-
-    /**
-     * Gets PHP version
-     *
-     * @return string
-     */
-    private function getPHPVersion()
-    {
-        return phpversion();
     }
 }

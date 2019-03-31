@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -29,8 +29,7 @@ final class GatewayEndpoints
     const PAYMENT_FORM_URL = 'https://mms.paymentsensegateway.com/Pages/PublicPages/PaymentForm.aspx';
     const PAYMENT_GATEWAYS = [
         1 => 'https://gw1.paymentsensegateway.com:4430/',
-        2 => 'https://gw2.paymentsensegateway.com:4430/',
-        3 => 'https://gw3.paymentsensegateway.com:4430/'
+        2 => 'https://gw2.paymentsensegateway.com:4430/'
     ];
 
     /**

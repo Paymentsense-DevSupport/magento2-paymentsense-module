@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2018 Paymentsense Ltd.
+ * Copyright (C) 2019 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2018 Paymentsense Ltd.
+ * @copyright   2019 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -24,6 +24,11 @@ namespace Paymentsense\Payments\Model\Psgw;
  */
 class Psgw
 {
+    /**
+     * @var int $trxMaxAttempts Number of attempts to perform a transaction
+     */
+    protected $trxMaxAttempts = 3;
+
     /**
      * @var \Magento\Framework\HTTP\ZendClientFactory $clientFactory
      */
@@ -36,6 +41,16 @@ class Psgw
         \Magento\Framework\HTTP\ZendClientFactory $clientFactory
     ) {
         $this->clientFactory = $clientFactory;
+    }
+
+    /**
+     * Sets the number of attempts to perform a transaction
+     *
+     * @param int $trxMaxAttempts Number of attempts to perform a transaction
+     */
+    public function setTrxMaxAttempts($trxMaxAttempts)
+    {
+        $this->trxMaxAttempts = $trxMaxAttempts;
     }
 
     /**
@@ -194,6 +209,38 @@ class Psgw
     }
 
     /**
+     * Performs GetGatewayEntryPoints transaction
+     *
+     * @param  array $trxData The transaction data
+     * @return array
+     */
+    public function performGetGatewayEntryPointsTxn($trxData)
+    {
+        $headers = [
+            'SOAPAction:https://www.thepaymentgateway.net/GetGatewayEntryPoints',
+            'Content-Type: text/xml; charset=utf-8',
+            'Accept: text/xml, application/xml, */*',
+            'Accept-Encoding: gzip, deflate',
+            'Connection: close',
+        ];
+
+        // @codingStandardsIgnoreStart
+        $xml = '<?xml version="1.0" encoding="utf-8"?>
+                     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                         <soap:Body>
+                             <GetGatewayEntryPoints xmlns="https://www.thepaymentgateway.net/">
+                                 <GetGatewayEntryPointsMessage>
+                                     <MerchantAuthentication MerchantID="' . $trxData['MerchantID'] . '" Password="' . $trxData['Password'] . '" />
+                                 </GetGatewayEntryPointsMessage>
+                             </GetGatewayEntryPoints>
+                         </soap:Body>
+                     </soap:Envelope>';
+        // @codingStandardsIgnoreEnd
+
+        return $this->executeTransaction($headers, $xml);
+    }
+
+    /**
      * Performs transactions to the Paymentsense gateway
      *
      * @param array $headers Request Headers
@@ -207,7 +254,6 @@ class Psgw
     {
         $gatewayId             = 1;
         $trxAttempt            = 0;
-        $trxMaxAttempts        = 3;
         $validGatewayResponse  = null;
 
         // Initial message. Will be replaced by the gateway message or cURL error message.
@@ -220,7 +266,7 @@ class Psgw
 
         while ($validGatewayResponse === null) {
             $trxAttempt++;
-            if ($trxAttempt > $trxMaxAttempts) {
+            if ($trxAttempt > $this->trxMaxAttempts) {
                 $trxAttempt = 1;
                 $gatewayId++;
             }
@@ -229,6 +275,7 @@ class Psgw
             if (is_string($url)) {
                 $data = [
                     'url'     => $url,
+                    'method'  => 'POST',
                     'headers' => $headers,
                     'xml'     => $xml,
                 ];
@@ -300,6 +347,8 @@ class Psgw
      *
      * @param array $data Data
      * @return \Zend_Http_Response|false
+     *
+     * @throws \Zend_Http_Client_Exception
      */
     public function executeHttpRequest($data)
     {
@@ -307,13 +356,14 @@ class Psgw
             'adapter'      => 'Zend_Http_Client_Adapter_Curl',
             'ssltransport' => 'tls',
             'strict'       => false,
-            'persistent'   => true
+            'persistent'   => true,
+            'timeout'      => 10
         ];
 
         $client = new \Zend_Http_Client($data['url'], $config);
         $client->setRawData($data['xml']);
         $client->setHeaders($data['headers']);
-        return $client->request('POST');
+        return $client->request($data['method']);
     }
 
     /**
