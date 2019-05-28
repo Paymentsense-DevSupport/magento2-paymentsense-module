@@ -26,6 +26,7 @@ GNU General Public License for more details.
                 <title>Paymentsense Hosted</title>
                 <hash_method>SHA1</hash_method>
                 <transaction_type>SALE</transaction_type>
+                <result_delivery_method>POST</result_delivery_method>
                 <email_address_editable>0</email_address_editable>
                 <phone_number_editable>0</phone_number_editable>
                 <address1_mandatory>1</address1_mandatory>

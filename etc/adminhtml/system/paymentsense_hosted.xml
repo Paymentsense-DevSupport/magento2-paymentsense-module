@@ -87,7 +87,17 @@ GNU General Public License for more details.
             </depends>
             <can_be_empty>0</can_be_empty>
         </field>
-        <field id="allow_amex" translate="label" type="select" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="result_delivery_method" translate="label" type="select" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="0">
+            <label>Result Delivery Method</label>
+            <config_path>payment/paymentsense_hosted/result_delivery_method</config_path>
+            <source_model>Paymentsense\Payments\Model\Config\ResultDeliveryMethod</source_model>
+            <validate>required-entry</validate>
+            <depends>
+                <field id="active">1</field>
+            </depends>
+            <can_be_empty>0</can_be_empty>
+        </field>
+        <field id="allow_amex" translate="label" type="select" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Enable American Express</label>
             <tooltip><![CDATA[Tick only if you have an American Express MID associated with your Paymentsense gateway account.]]></tooltip>
             <config_path>payment/paymentsense_hosted/allow_amex</config_path>
@@ -96,7 +106,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="order_status" translate="label" type="select" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="order_status" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>New Order Status</label>
             <tooltip><![CDATA[This is the default order status for new orders.]]></tooltip>
             <config_path>payment/paymentsense_hosted/order_status</config_path>
@@ -107,7 +117,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="allowspecific" translate="label" type="allowspecific" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="allowspecific" translate="label" type="allowspecific" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Payment from Applicable Countries</label>
             <config_path>payment/paymentsense_hosted/allowspecific</config_path>
             <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
@@ -115,7 +125,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="specificcountry" translate="label" type="multiselect" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="specificcountry" translate="label" type="multiselect" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Payment from Specific Countries</label>
             <config_path>payment/paymentsense_hosted/specificcountry</config_path>
             <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
@@ -126,7 +136,7 @@ GNU General Public License for more details.
                 <field id="allowspecific">1</field>
             </depends>
         </field>
-        <field id="allow_specific_currency" translate="label" type="select" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="allow_specific_currency" translate="label" type="select" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Allow Specific Currencies</label>
             <config_path>payment/paymentsense_hosted/allow_specific_currency</config_path>
             <source_model>Paymentsense\Payments\Model\Config\Source\Locale\Currency\AllSpecificCurrencies</source_model>
@@ -134,7 +144,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="specific_currencies" translate="label" type="multiselect" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="1">
+        <field id="specific_currencies" translate="label" type="multiselect" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Specific Currencies</label>
             <config_path>payment/paymentsense_hosted/specific_currencies</config_path>
             <source_model>Paymentsense\Payments\Model\Config\Source\Locale\Currency\Currency</source_model>
@@ -146,7 +156,7 @@ GNU General Public License for more details.
             <can_be_empty>0</can_be_empty>
         </field>
 
-        <field id="email_address_editable" translate="label" type="select" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="email_address_editable" translate="label" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Email Address can be altered on payment form:</label>
             <tooltip><![CDATA[This option allows the customer to change the email address that entered during checkout. By default the Paymentsense module will pass the customers email address that they entered during checkout.]]></tooltip>
             <config_path>payment/paymentsense_hosted/email_address_editable</config_path>
@@ -155,7 +165,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="phone_number_editable" translate="label" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="phone_number_editable" translate="label" type="select" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Phone Number can be altered on payment form:</label>
             <tooltip><![CDATA[This option allows the customer to change the phone number that entered during checkout. By default the Paymentsense module will pass the customers phone number that they entered during checkout.]]></tooltip>
             <config_path>payment/paymentsense_hosted/phone_number_editable</config_path>
@@ -164,7 +174,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="address1_mandatory" translate="label" type="select" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="address1_mandatory" translate="label" type="select" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Address Line 1 Mandatory:</label>
             <tooltip><![CDATA[Define the Address Line 1 as a Mandatory field on the Payment form. This is used for the Address Verification System (AVS) check on the customers card. Recommended Setting "Yes".]]></tooltip>
             <config_path>payment/paymentsense_hosted/address1_mandatory</config_path>
@@ -173,7 +183,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="city_mandatory" translate="label" type="select" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="city_mandatory" translate="label" type="select" sortOrder="18" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>City Mandatory:</label>
             <tooltip><![CDATA[Define the City as a Mandatory field on the Payment form.]]></tooltip>
             <config_path>payment/paymentsense_hosted/city_mandatory</config_path>
@@ -182,7 +192,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="state_mandatory" translate="label" type="select" sortOrder="18" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="state_mandatory" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>State/County Mandatory:</label>
             <tooltip><![CDATA[Define the State/County as a Mandatory field on the Payment form.]]></tooltip>
             <config_path>payment/paymentsense_hosted/state_mandatory</config_path>
@@ -191,7 +201,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="postcode_mandatory" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="postcode_mandatory" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Post Code Mandatory:</label>
             <tooltip><![CDATA[Define the Post Code as a Mandatory field on the Payment form. This is used for the Address Verification System (AVS) check on the customers card. Recommended Setting "Yes".]]></tooltip>
             <config_path>payment/paymentsense_hosted/postcode_mandatory</config_path>
@@ -200,7 +210,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="country_mandatory" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="country_mandatory" translate="label" type="select" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Country Mandatory:</label>
             <tooltip><![CDATA[Define the Country as a Mandatory field on the Payment form.]]></tooltip>
             <config_path>payment/paymentsense_hosted/country_mandatory</config_path>
@@ -209,7 +219,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="log_level" translate="label" type="select" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="log_level" translate="label" type="select" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Log Level</label>
             <config_path>payment/paymentsense_hosted/log_level</config_path>
             <source_model>Paymentsense\Payments\Model\Config\LogLevel</source_model>
@@ -219,8 +229,8 @@ GNU General Public License for more details.
             </depends>
             <can_be_empty>0</can_be_empty>
         </field>
-        <field id="port_4430_not_open" translate="label" type="select" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="0">
-            <label>Port 4430 is NOT open on my server (safe mode with refunds disabled):</label>
+        <field id="port_4430_not_open" translate="label" type="select" sortOrder="23" showInDefault="1" showInWebsite="1" showInStore="0">
+            <label>Port 4430 is NOT open on my server (safe mode with cross reference transactions disabled):</label>
             <tooltip><![CDATA[Cross reference transactions (COLLECTION, REFUND, VOID) require outbound port 4430 to be open. When port 4430 is not open this setting should be set to "Yes" to disable these transactions.]]></tooltip>
             <config_path>payment/paymentsense_hosted/port_4430_not_open</config_path>
             <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

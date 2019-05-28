@@ -249,12 +249,13 @@ class Psgw
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    // phpcs:ignore Generic.Metrics.CyclomaticComplexity
+    // phpcs:ignore Generic.Metrics.CyclomaticComplexity, Generic.Metrics.NestingLevel
     public function executeTransaction($headers, $xml)
     {
-        $gatewayId             = 1;
-        $trxAttempt            = 0;
-        $validGatewayResponse  = null;
+        $gatewayId            = 1;
+        $trxAttempt           = 0;
+        $validResponse        = false;
+        $trxAttemptsExhausted = false;
 
         // Initial message. Will be replaced by the gateway message or cURL error message.
         $trxMessage = 'The communication with the Payment Gateway failed. Check outbound connection.';
@@ -263,8 +264,7 @@ class Psgw
         $trxDetail         = false;
         $trxCrossReference = false;
         $responseBody      = '';
-
-        while ($validGatewayResponse === null) {
+        while (!$validResponse && !$trxAttemptsExhausted) {
             $trxAttempt++;
             if ($trxAttempt > $this->trxMaxAttempts) {
                 $trxAttempt = 1;
@@ -284,10 +284,13 @@ class Psgw
                     $response = $this->executeHttpRequest($data);
                     if ($response->getStatus() === \Zend\Http\Response::STATUS_CODE_200) {
                         $responseBody  = $response->getBody();
-                        $trxStatusCode = $this->getXmlValue('StatusCode', $responseBody, '[0-9]+');
-                        $trxMessage    = $this->getXmlValue('Message', $responseBody, '.+');
-                        if (!$this->shouldRetryTxn($trxStatusCode, $trxMessage)) {
-                            $validGatewayResponse = is_numeric($trxStatusCode);
+
+                        if (!empty($responseBody)) {
+                            $trxStatusCode = $this->getXmlValue('StatusCode', $responseBody, '[0-9]+');
+                            if (is_numeric($trxStatusCode)) {
+                                $trxMessage    = $this->getXmlValue('Message', $responseBody, '.+');
+                                $validResponse = !$this->shouldRetryTxn($trxStatusCode, $trxMessage);
+                            }
                         }
                     }
                 } catch (\Exception $e) {
@@ -295,11 +298,11 @@ class Psgw
                     unset($e);
                 }
             } else {
-                $validGatewayResponse = false;
+                $trxAttemptsExhausted = true;
             }
         };
 
-        if ($validGatewayResponse) {
+        if ($validResponse) {
             $trxMessage        = $this->getXmlValue('Message', $responseBody, '.+');
             $trxDetail         = $this->getXmlValue('Detail', $responseBody, '.+');
             $trxCrossReference = $this->getXmlCrossReference($responseBody);

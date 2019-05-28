@@ -93,12 +93,22 @@ abstract class Action extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * Gets an array of the Submitted Post Request
+     * Gets an array of the Submitted POST HTTP Request
      *
      * @return array
      */
     protected function getPostData()
     {
         return $this->getRequest()->getPostValue();
+    }
+
+    /**
+     * Gets an array of the Submitted Get HTTP Request
+     *
+     * @return array
+     */
+    protected function getQueryData()
+    {
+        return $this->getRequest()->getQueryValue();
     }
 }

@@ -87,12 +87,20 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 2.0.5
+##### Added
+- SERVER result delivery method (Paymentsense Hosted)
+
+##### Fixed
+- Switching to the next gateway entry point when an unexpected response from the gateway is received
+
+
 ### 2.0.4
 ##### Added
 - Extended module information feature
 - Payment method status on the Payments Methods configuration page
 - Gateway connection status on the Payments Methods configuration page
-- "Port 4430 is NOT open on my server (safe mode with refunds disabled)" configuration setting disabling the cross reference transactions (Paymentsense Hosted)
+- "Port 4430 is NOT open on my server (safe mode with cross reference transactions disabled)" configuration setting disabling the cross reference transactions (Paymentsense Hosted)
 
 ##### Removed
 - gw3 gateway entry point

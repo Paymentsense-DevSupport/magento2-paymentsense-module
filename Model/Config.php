@@ -263,6 +263,16 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
     }
 
     /**
+     * Gets Result Delivery Method
+     *
+     * @return string
+     */
+    public function getResultDeliveryMethod()
+    {
+        return $this->getValue('result_delivery_method');
+    }
+
+    /**
      * Gets Email Address Editable
      *
      * @return string
