@@ -19,6 +19,8 @@
 
 namespace Paymentsense\Payments\Controller\Hosted;
 
+use Magento\Backend\Model\Session;
+
 /**
  * Handles the payment method status request
  *
@@ -27,21 +29,33 @@ namespace Paymentsense\Payments\Controller\Hosted;
 class Status extends \Paymentsense\Payments\Controller\StatusAction
 {
     /**
+     * @var \Paymentsense\Payments\Helper\DiagnosticMessage
+     */
+    protected $_messageHelper;
+
+    /**
+     * @var \Paymentsense\Payments\Model\Method\Hosted|\Paymentsense\Payments\Model\Method\Direct
+     */
+    protected $_method;
+
+    /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
+     * @param \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper
      * @param \Magento\Backend\Model\Session $backendSession
-     * @param \Paymentsense\Payments\Model\Method\Hosted
+     * @param \Paymentsense\Payments\Model\Method\Hosted $method
      */
-    // @codingStandardsIgnoreStart
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Backend\Model\Session $backendSession,
+        \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper,
+        Session $backendSession,
         \Paymentsense\Payments\Model\Method\Hosted $method
     ) {
-        parent::__construct($context, $logger, $backendSession, $method);
+        parent::__construct($context, $logger, $messageHelper, $backendSession, $method);
+        $this->_messageHelper = $messageHelper;
+        $this->_method        = $method;
     }
-    // @codingStandardsIgnoreEnd
 
     /**
      * Handles the payment method status request
@@ -49,32 +63,11 @@ class Status extends \Paymentsense\Payments\Controller\StatusAction
      */
     public function execute()
     {
-        $status = $this->getStatus();
-        $connection = $this->getConnection();
+        $arr = $this->_messageHelper->getStatusMessage($this->_method->isConfigured(), true);
+        $arr = array_merge($arr, $this->getConnectionMessage());
+        $arr = array_merge($arr, $this->_method->getSettingsMessage(false));
         $this->getResponse()
             ->setHeader('Content-Type', 'application/json')
-            ->setBody(json_encode(array_merge($status, $connection)));
-    }
-
-    /**
-     * Gets the payment method status
-     */
-    private function getStatus()
-    {
-        switch (true) {
-            case !$this->_method->isConfigured():
-                $result = [
-                    'statusText' => __('Unavailable (Payment method not configured)'),
-                    'statusClassName' => 'red-text'
-                ];
-                break;
-            default:
-                $result = [
-                    'statusText' => __('Enabled'),
-                    'statusClassName' => 'green-text'
-                ];
-                break;
-        }
-        return $result;
+            ->setBody(json_encode($arr));
     }
 }

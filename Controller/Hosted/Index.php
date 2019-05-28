@@ -140,7 +140,7 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
         $this->_method->getLogger()->info(
             'POST Callback request from the Hosted Payment Form has been received.'
         );
-        if (!$this->getRequest()->isPost()) {
+        if (! $this->getRequest()->isPost()) {
             $this->_method->getLogger()->warning('Non-POST callback request triggering HTTP status code 400.');
             $this->getResponse()->setHttpResponseCode(
                 \Magento\Framework\Webapi\Exception::HTTP_BAD_REQUEST
@@ -180,7 +180,7 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
         $this->_method->getLogger()->info(
             'SERVER Callback request from the Hosted Payment Form has been received.'
         );
-        if (!$this->getRequest()->isPost()) {
+        if (! $this->getRequest()->isPost()) {
             $this->_method->getLogger()->warning('Non-POST HTTP Method responding with an error to the gateway.');
             $this->setError(self::MSG_NON_POST_HTTP_METHOD);
         } else {

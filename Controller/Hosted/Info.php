@@ -20,47 +20,31 @@
 namespace Paymentsense\Payments\Controller\Hosted;
 
 /**
- * Provides data for the form redirecting to the Hosted Payment Form
+ * Handles the module information request
  *
  * @package Paymentsense\Payments\Controller\Hosted
  */
-class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
+class Info extends \Paymentsense\Payments\Controller\InfoAction
 {
+    /**
+     * @var \Paymentsense\Payments\Model\Method\Hosted
+     */
+    protected $method;
+
     /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Magento\Sales\Model\OrderFactory $orderFactory
-     * @param \Paymentsense\Payments\Model\Method\Hosted
+     * @param \Paymentsense\Payments\Model\ModuleInfo $moduleInfo
+     * @param \Paymentsense\Payments\Model\Method\Hosted $method
      */
     // @codingStandardsIgnoreStart
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Sales\Model\OrderFactory $orderFactory,
+        \Paymentsense\Payments\Model\ModuleInfo $moduleInfo,
         \Paymentsense\Payments\Model\Method\Hosted $method
     ) {
-        parent::__construct($context, $logger, $checkoutSession, $orderFactory, $method);
+        parent::__construct($context, $logger, $moduleInfo, $method);
     }
     // @codingStandardsIgnoreEnd
-
-    /**
-     * Handles ajax requests and provides the form data for redirecting to the Hosted Payment Form
-     * Generates application/json response containing the form data in JSON format
-     *
-     * @throws \Exception
-     */
-    public function execute()
-    {
-        $order = $this->getOrder();
-        if (isset($order)) {
-            $data = $this->_method->buildHpfFields($order);
-            $this->getResponse()
-                ->setHeader('Content-Type', 'application/json')
-                ->setBody(json_encode($data));
-        } else {
-            $this->redirectToCheckoutOnePageSuccess();
-        }
-    }
 }

@@ -27,12 +27,18 @@ use Magento\Store\Model\ScopeInterface;
  */
 class Config implements \Magento\Payment\Model\Method\ConfigInterface
 {
+    const MODULE_NAME = 'Paymentsense Module for Magento 2 Open Source';
+
     /**
      * Current payment method code
      *
      * @var string
      */
     protected $_methodCode;
+    /**
+     * @var \Magento\Framework\Module\ModuleListInterface
+     */
+    protected $moduleList;
     /**
      * Current store id
      *
@@ -50,11 +56,14 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
 
     /**
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\Framework\Module\ModuleListInterface
      */
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Framework\Module\ModuleListInterface $moduleListInterface
     ) {
         $this->_scopeConfig = $scopeConfig;
+        $this->moduleList   = $moduleListInterface;
     }
 
     /**
@@ -78,6 +87,37 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
     }
 
     /**
+     * Gets module name
+     *
+     * @return string
+     */
+    public function getModuleName()
+    {
+        return self::MODULE_NAME;
+    }
+
+    /**
+     * Gets module installed version
+     *
+     * @return string
+     */
+    public function getModuleInstalledVersion()
+    {
+        return $this->moduleList->getOne('Paymentsense_Payments')['setup_version'];
+    }
+
+    /**
+     * Gets module HTTP user agent
+     * Used for performing cURL requests
+     *
+     * @return string
+     */
+    public function getUserAgent()
+    {
+        return $this->getModuleName() . ' v.' . $this->getModuleInstalledVersion();
+    }
+
+    /**
      * Sets store ID
      *
      * @param int $storeId
@@ -85,7 +125,7 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
      */
     public function setStoreId($storeId)
     {
-        $this->_storeId = (int)$storeId;
+        $this->_storeId = (int) $storeId;
         return $this;
     }
 

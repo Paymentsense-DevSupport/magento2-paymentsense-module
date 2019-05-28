@@ -32,31 +32,46 @@ class Acs extends \Magento\Framework\View\Element\Template
     /**
      * Retrieves Cancel Order text
      *
-     * @return string
+     * @return string|false
      */
     public function getCancelOrderText()
     {
-        return __('Cancel order & restore cart');
+        try {
+            $result = __('Cancel order & restore cart');
+        } catch (\Exception $e) {
+            $result = false;
+        }
+        return $result;
     }
 
     /**
      * Retrieves Common Error text
      *
-     * @return string
+     * @return string|false
      */
     public function getCommonErrorText()
     {
-        return __('An error occurred while processing 3-D Secure authentication.');
+        try {
+            $result = __('An error occurred while processing 3-D Secure authentication.');
+        } catch (\Exception $e) {
+            $result = false;
+        }
+        return $result;
     }
 
     /**
      * Retrieves Continue text
      *
-     * @return string
+     * @return string|false
      */
     public function getContinueText()
     {
-        return __('Continue to the payment methods');
+        try {
+            $result = __('Continue to the payment methods');
+        } catch (\Exception $e) {
+            $result = false;
+        }
+        return $result;
     }
 
     /**

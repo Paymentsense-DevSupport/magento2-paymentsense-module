@@ -27,6 +27,11 @@ use Magento\Backend\Model\Session;
 abstract class StatusAction extends CsrfAwareAction
 {
     /**
+     * @var \Paymentsense\Payments\Helper\DiagnosticMessage
+     */
+    protected $_messageHelper;
+
+    /**
      * Expiration time of the result of the connection check in seconds
      * Used to reduce the connection requests to the gateway
      *
@@ -47,16 +52,19 @@ abstract class StatusAction extends CsrfAwareAction
     /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
+     * @param \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper
      * @param \Magento\Backend\Model\Session $backendSession
      * @param \Magento\Payment\Model\Method\AbstractMethod $method
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
+        \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper,
         Session $backendSession,
         $method
     ) {
         parent::__construct($context, $logger);
+        $this->_messageHelper = $messageHelper;
         $this->_backendSession = $backendSession;
         $this->_method         = $method;
     }
@@ -73,8 +81,10 @@ abstract class StatusAction extends CsrfAwareAction
 
     /**
      * Gets the gateway connection status
+     *
+     * @return array
      */
-    protected function getConnection()
+    protected function getConnectionMessage()
     {
         $paymentsenseGatewayConnectionTime = $this->getBackendSession()->getPaymentsenseGatewayConnectionTime();
         if (!isset($paymentsenseGatewayConnectionTime)) {
@@ -89,17 +99,6 @@ abstract class StatusAction extends CsrfAwareAction
             $connectionSuccessful = $this->getBackendSession()->getPaymentsenseGatewayConnectionStatus();
         }
 
-        if ($connectionSuccessful) {
-            $result = [
-                'connectionText' => __('Successful'),
-                'connectionClassName' => 'green-text'
-            ];
-        } else {
-            $result = [
-                'connectionText' => __('Unavailable (No Connection to the gateway. Please check outbound port 4430).'),
-                'connectionClassName' => 'red-text'
-            ];
-        }
-        return $result;
+        return $this->_messageHelper->getConnectionMessage($connectionSuccessful);
     }
 }

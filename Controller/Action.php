@@ -93,7 +93,7 @@ abstract class Action extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * Gets an array of the Submitted POST HTTP Request
+     * Gets an array of the submitted POST HTTP Request
      *
      * @return array
      */
@@ -103,7 +103,7 @@ abstract class Action extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * Gets an array of the Submitted Get HTTP Request
+     * Gets an array of the submitted Get HTTP Request
      *
      * @return array
      */

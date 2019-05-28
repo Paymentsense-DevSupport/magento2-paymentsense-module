@@ -264,7 +264,7 @@ class Psgw
         $trxDetail         = false;
         $trxCrossReference = false;
         $responseBody      = '';
-        while (!$validResponse && !$trxAttemptsExhausted) {
+        while (! $validResponse && ! $trxAttemptsExhausted) {
             $trxAttempt++;
             if ($trxAttempt > $this->trxMaxAttempts) {
                 $trxAttempt = 1;
@@ -289,7 +289,7 @@ class Psgw
                             $trxStatusCode = $this->getXmlValue('StatusCode', $responseBody, '[0-9]+');
                             if (is_numeric($trxStatusCode)) {
                                 $trxMessage    = $this->getXmlValue('Message', $responseBody, '.+');
-                                $validResponse = !$this->shouldRetryTxn($trxStatusCode, $trxMessage);
+                                $validResponse = ! $this->shouldRetryTxn($trxStatusCode, $trxMessage);
                             }
                         }
                     }

@@ -85,6 +85,7 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
         $htmlId = $element->getHtmlId();
         $initialStatus = $this->method->isEnabled() ? __('Testing...') : __('Disabled');
         $initialConnection = $this->method->isEnabled() ? __('Testing...') : __('Unknown');
+        $initialSettings = $this->method->isEnabled() ? __('Testing...') : __('Unknown');
         $html = '<div class="config-heading">';
         $html .= '<div class="button-container"><button type="button"' .
             ' class="button action-configure' .
@@ -112,8 +113,11 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
         $html .= '<span>' . __('Payment Method Status:') . ' </span>';
         $html .= '<span id="' . $htmlId . '-status">' . $initialStatus . '</span>';
         $html .= '</div><div class="connectionDiv">';
-        $html .= '<span>' . __('Gateway Connection:') . ' </span>';
+        $html .= '<span>' . __('Connection to Gateway Servers:') . ' </span>';
         $html .= '<span id="' . $htmlId . '-connection">' . $initialConnection . '</span>';
+        $html .= '</div><div class="settingsDiv">';
+        $html .= '<span>' . __('Gateway Settings:') . ' </span>';
+        $html .= '<span id="' . $htmlId . '-settings">' . $initialSettings . '</span>';
         $html .= '</div></div></div>';
 
         return $html;
@@ -169,38 +173,42 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
                 $.ajax({
                     url: paymentMethodStatusUrl,
                     type: \"GET\",
-                    success: showStatus,
-                    error: showUnknownStatus
+                    success: showInfo,
+                    error: showUnknownInfo
                 });
             }
 
             /**
-             * Shows the status and connection
+             * Shows the status, connection and settings
              */
-            function showStatus(data)
+            function showInfo(data)
             {
                 if (data.statusText != null) {
                     var statusSpan = document.getElementById('" . $htmlId . "-status');
                     var connectionSpan = document.getElementById('" . $htmlId . "-connection');
+                    var settingsSpan = document.getElementById('" . $htmlId . "-settings');
                     statusSpan.innerHTML = data.statusText;
                     statusSpan.className = data.statusClassName;
                     connectionSpan.innerHTML = data.connectionText;
                     connectionSpan.className = data.connectionClassName;
-
+                    settingsSpan.innerHTML = data.settingsText;
+                    settingsSpan.className = data.settingsClassName;
                 } else {
-                    showUnknownStatus(data);
+                    showUnknownInfo(data);
                 }
             }
 
             /**
-             * Shows an unknown status and connection
+             * Shows an unknown status, connection and settings
              */
-            function showUnknownStatus(data)
+            function showUnknownInfo(data)
             {
                 var statusSpan = document.getElementById('" . $htmlId . "-status');
                 var connectionSpan = document.getElementById('" . $htmlId . "-connection');
+                var settingsSpan = document.getElementById('" . $htmlId . "-settings');
                 statusSpan.innerHTML = '" . __('Unknown') . "';
                 connectionSpan.innerHTML = '" . __('Unknown') . "';
+                settingsSpan.innerHTML = '" . __('Unknown') . "';
             }            
             ";
         }

@@ -23,6 +23,9 @@ use Paymentsense\Payments\Model\Psgw\Psgw;
 use Paymentsense\Payments\Model\Psgw\DataBuilder;
 use Paymentsense\Payments\Model\Psgw\TransactionType;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
+use Paymentsense\Payments\Model\Psgw\HpfResponses;
+use Paymentsense\Payments\Model\Psgw\GatewayEndpoints;
+use Magento\Sales\Model\Order;
 
 /**
  * Trait for processing transactions
@@ -499,5 +502,284 @@ trait Transactions
     {
         $port4430IsNotOpen = (bool) $this->getConfigHelper()->getPort4430NotOpen();
         $this->_canCapture = $this->_canRefund = $this->_canVoid = ! $port4430IsNotOpen;
+    }
+
+    /**
+     * Checks whether the gateway settings are valid by performing a request to the Hosted Payment Form
+     *
+     * @return string
+     */
+    public function checkGatewaySettings()
+    {
+        $result = HpfResponses::HPF_RESP_NO_RESPONSE;
+        try {
+            $objectManager     = $this->getModuleHelper()->getObjectManager();
+            $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
+            $psgw              = new Psgw($zendClientFactory);
+            $fields            = $this->buildHpfFields();
+            $postData          = http_build_query($fields['elements']);
+            $headers           = [
+                'User-Agent: ' . $this->getConfigHelper()->getUserAgent(),
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language: en-UK,en;q=0.5',
+                'Accept-Encoding: identity',
+                'Connection: close',
+                'Content-Type: application/x-www-form-urlencoded',
+                'Content-Length: ' . strlen($postData)
+            ];
+            $data              = [
+                'url'     => GatewayEndpoints::getPaymentFormUrl(),
+                'method'  => 'POST',
+                'headers' => $headers,
+                'xml'     => $postData
+            ];
+
+            $response = $psgw->executeHttpRequest($data);
+            $responseBody = $response->getBody();
+            if ($responseBody) {
+                $hpf_err_msg = $this->getHpfErrorMessage($response);
+                if (is_string($hpf_err_msg)) {
+                    switch (true) {
+                        case $this->contains($hpf_err_msg, HpfResponses::HPF_RESP_HASH_INVALID):
+                            $result = HpfResponses::HPF_RESP_HASH_INVALID;
+                            break;
+                        case $this->contains($hpf_err_msg, HpfResponses::HPF_RESP_MID_MISSING):
+                            $result = HpfResponses::HPF_RESP_MID_MISSING;
+                            break;
+                        case $this->contains($hpf_err_msg, HpfResponses::HPF_RESP_MID_NOT_EXISTS):
+                            $result = HpfResponses::HPF_RESP_MID_NOT_EXISTS;
+                            break;
+                        default:
+                            $result = HpfResponses::HPF_RESP_NO_RESPONSE;
+                    }
+                } else {
+                    $result = HpfResponses::HPF_RESP_OK;
+                }
+            }
+        } catch (\Exception $e) {
+            $this->getLogger()->error(
+                'An error occurred while checking gateway settings through an HPF request: ' . $e->getMessage()
+            );
+            $result = HpfResponses::HPF_RESP_NO_RESPONSE;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Builds the fields for the Hosted Payment Form as an associative array
+     *
+     * @param  \Magento\Sales\Model\Order $order
+     * @return array An associative array containing the Required Input Variables for the API of the Hosted Payment Form
+     *
+     * @throws \Exception
+     */
+    public function buildHpfFields($order = null)
+    {
+        $config = $this->getConfigHelper();
+        $fields = $order ? $this->buildPaymentFields($order) : $this->buildSamplePaymentFields();
+
+        $fields = array_map(
+            function ($value) {
+                return $value === null ? '' : $value;
+            },
+            $fields
+        );
+
+        $data  = 'MerchantID=' . $config->getMerchantId();
+        $data .= '&Password=' . $config->getPassword();
+
+        foreach ($fields as $key => $value) {
+            $data .= '&' . $key . '=' . $value;
+        };
+
+        $gatewayHashMethod = ($this instanceof \Paymentsense\Payments\Model\Method\Hosted)
+            ? $config->getHashMethod()
+            : 'SHA1';
+
+        $additionalFields = [
+            'HashDigest' => $this->calculateHashDigest($data, $gatewayHashMethod, $config->getPresharedKey()),
+            'MerchantID' => $config->getMerchantId(),
+        ];
+
+        $fields = array_merge($additionalFields, $fields);
+
+        if ($order) {
+            $orderId = $order->getRealOrderId();
+            $this->getLogger()->info(
+                'Preparing Hosted Payment Form redirect with ' . $config->getTransactionType() .
+                ' transaction for order #' . $orderId
+            );
+
+            $this->getModuleHelper()->setOrderStatusByState($order, Order::STATE_PENDING_PAYMENT);
+            $order->save();
+        }
+
+        return [
+            'url'      => GatewayEndpoints::getPaymentFormUrl(),
+            'elements' => $fields
+        ];
+    }
+
+    /**
+     * Builds the redirect form action URL and the variables for the Hosted Payment Form
+     *
+     * @param  \Magento\Sales\Model\Order $order
+     * @return array
+     */
+    public function buildPaymentFields($order)
+    {
+        $billingAddress = $order->getBillingAddress();
+        $config = $this->getConfigHelper();
+        $orderId = $order->getRealOrderId();
+        return [
+            'Amount'                    => $order->getTotalDue() * 100,
+            'CurrencyCode'              => DataBuilder::getCurrencyIsoCode($order->getOrderCurrencyCode()),
+            'OrderID'                   => $orderId,
+            'TransactionType'           => $config->getTransactionType(),
+            'TransactionDateTime'       => date('Y-m-d H:i:s P'),
+            'CallbackURL'               => $this->getModuleHelper()->getHpfCallbackUrl(),
+            'OrderDescription'          => $order->getRealOrderId() . ': New order',
+            'CustomerName'              => $billingAddress->getFirstname() . ' ' . $billingAddress->getLastname(),
+            'Address1'                  => $billingAddress->getStreetLine(1),
+            'Address2'                  => $billingAddress->getStreetLine(2),
+            'Address3'                  => $billingAddress->getStreetLine(3),
+            'Address4'                  => $billingAddress->getStreetLine(4),
+            'City'                      => $billingAddress->getCity(),
+            'State'                     => $billingAddress->getRegionCode(),
+            'PostCode'                  => $billingAddress->getPostcode(),
+            'CountryCode'               => DataBuilder::getCountryIsoCode($billingAddress-> getCountryId()),
+            'EmailAddress'              => $order->getCustomerEmail(),
+            'PhoneNumber'               => $billingAddress->getTelephone(),
+            'EmailAddressEditable'      => DataBuilder::getBool($config->getEmailAddressEditable()),
+            'PhoneNumberEditable'       => DataBuilder::getBool($config->getPhoneNumberEditable()),
+            'CV2Mandatory'              => 'true',
+            'Address1Mandatory'         => DataBuilder::getBool($config->getAddress1Mandatory()),
+            'CityMandatory'             => DataBuilder::getBool($config->getCityMandatory()),
+            'PostCodeMandatory'         => DataBuilder::getBool($config->getPostcodeMandatory()),
+            'StateMandatory'            => DataBuilder::getBool($config->getStateMandatory()),
+            'CountryMandatory'          => DataBuilder::getBool($config->getCountryMandatory()),
+            'ResultDeliveryMethod'      => $config->getResultDeliveryMethod(),
+            'ServerResultURL'           => ('SERVER' === $config->getResultDeliveryMethod())
+                ? $this->getModuleHelper()->getHpfCallbackUrl()
+                : '',
+            'PaymentFormDisplaysResult' => 'false'
+        ];
+    }
+
+    /**
+     * Builds the redirect form action URL and the variables for the Hosted Payment Form
+     *
+     * @return array
+     */
+    public function buildSamplePaymentFields()
+    {
+        $config = $this->getConfigHelper();
+        return [
+            'Amount'                    => 100,
+            'CurrencyCode'              => DataBuilder::getCurrencyIsoCode(null),
+            'OrderID'                   => 'TEST-' . rand(1000000, 9999999),
+            'TransactionType'           => $config->getTransactionType(),
+            'TransactionDateTime'       => date('Y-m-d H:i:s P'),
+            'CallbackURL'               => $this->getModuleHelper()->getHpfCallbackUrl(),
+            'OrderDescription'          => '',
+            'CustomerName'              => '',
+            'Address1'                  => '',
+            'Address2'                  => '',
+            'Address3'                  => '',
+            'Address4'                  => '',
+            'City'                      => '',
+            'State'                     => '',
+            'PostCode'                  => '',
+            'CountryCode'               => '',
+            'EmailAddress'              => '',
+            'PhoneNumber'               => '',
+            'EmailAddressEditable'      => 'true',
+            'PhoneNumberEditable'       => 'true',
+            'CV2Mandatory'              => 'true',
+            'Address1Mandatory'         => 'false',
+            'CityMandatory'             => 'false',
+            'PostCodeMandatory'         => 'false',
+            'StateMandatory'            => 'false',
+            'CountryMandatory'          => 'false',
+            'ResultDeliveryMethod'      => 'POST',
+            'ServerResultURL'           => '',
+            'PaymentFormDisplaysResult' => 'false'
+        ];
+    }
+
+    /**
+     * Checks whether a string contains a needle.
+     *
+     * @param string $string the string.
+     * @param string $needle the needle.
+     *
+     * @return bool
+     */
+    public function contains($string, $needle)
+    {
+        return false !== strpos($string, $needle);
+    }
+
+    /**
+     * Determines whether the response message is about invalid merchant credentials
+     *
+     * @param string $msg Message.
+     * @return bool
+     */
+    public function merchantCredentialsInvalid($msg)
+    {
+        return $this->contains($msg, 'Input variable errors')
+            || $this->contains($msg, 'Invalid merchant details');
+    }
+
+    /**
+     * Gets the error message from the Hosted Payment Form response (span id lbErrorMessageLabel)
+     *
+     * @param string $data HTML document.
+     *
+     * @return string
+     */
+    protected function getHpfErrorMessage($data)
+    {
+        $result = null;
+        if (preg_match('/<span.*lbErrorMessageLabel[^>]*>(.*?)<\/span>/si', $data, $matches)) {
+            $result = strip_tags($matches[1]);
+        }
+        return $result;
+    }
+
+    /**
+     * Calculates the hash digest.
+     * Supported hash methods: MD5, SHA1, HMACMD5, HMACSHA1
+     *
+     * @param string $data Data to be hashed.
+     * @param string $hashMethod Hash method.
+     * @param string $key Secret key to use for generating the hash.
+     * @return string
+     */
+    public function calculateHashDigest($data, $hashMethod, $key)
+    {
+        $result     = '';
+        $includeKey = in_array($hashMethod, ['MD5', 'SHA1'], true);
+        if ($includeKey) {
+            $data = 'PreSharedKey=' . $key . '&' . $data;
+        }
+        switch ($hashMethod) {
+            case 'MD5':
+                // @codingStandardsIgnoreLine
+                $result = md5($data);
+                break;
+            case 'SHA1':
+                $result = sha1($data);
+                break;
+            case 'HMACMD5':
+                $result = hash_hmac('md5', $data, $key);
+                break;
+            case 'HMACSHA1':
+                $result = hash_hmac('sha1', $data, $key);
+                break;
+        }
+        return $result;
     }
 }

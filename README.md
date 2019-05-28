@@ -87,6 +87,15 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 2.0.6
+##### Added
+- Gateway settings check
+
+##### Changed
+- URL of the extended module information feature
+- Output of the extended module information feature
+
+
 ### 2.0.5
 ##### Added
 - SERVER result delivery method (Paymentsense Hosted)

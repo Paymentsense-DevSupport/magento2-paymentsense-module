@@ -29,17 +29,10 @@ use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
  */
 class ModuleInfo
 {
-    const MODULE_NAME = 'Paymentsense Module for Magento 2 Open Source';
-
     /**
      * @var Method\Direct $method
      */
     private $method;
-
-    /**
-     * @var \Magento\Framework\Module\ModuleListInterface
-     */
-    private $moduleList;
 
     /**
      * @var \Magento\Framework\App\ProductMetadataInterface
@@ -52,18 +45,15 @@ class ModuleInfo
     private $objectManager;
 
     /**
-     * @param \Magento\Framework\Module\ModuleListInterface
      * @param \Magento\Framework\App\ProductMetadataInterface
      * @param \Magento\Framework\ObjectManagerInterface
      * @param Method\Direct $method
      */
     public function __construct(
-        \Magento\Framework\Module\ModuleListInterface $moduleListInterface,
         \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface,
         \Magento\Framework\ObjectManagerInterface $objectManager,
         Method\Direct $method
     ) {
-        $this->moduleList      = $moduleListInterface;
         $this->productMetadata = $productMetadataInterface;
         $this->objectManager   = $objectManager;
         $this->method          = $method;
@@ -85,10 +75,10 @@ class ModuleInfo
 
         if ($extendedInfoRequest) {
             $extendedInfo = [
-                'Module Latest Version' => $this->getModuleLatestVersion(),
-                'Magento Version'       => $this->getMagentoVersion(),
-                'PHP Version'           => $this->getPHPVersion(),
-                'Connectivity'          => $this->getConnectivityStatus(),
+                'Module Latest Version'     => $this->getModuleLatestVersion(),
+                'Magento Version'           => $this->getMagentoVersion(),
+                'PHP Version'               => $this->getPHPVersion(),
+                'Connectivity on port 4430' => $this->getConnectivityStatus()
             ];
             $info = array_merge($info, $extendedInfo);
         }
@@ -121,7 +111,18 @@ class ModuleInfo
      */
     private function getModuleName()
     {
-        return self::MODULE_NAME;
+        return $this->method->getConfigHelper()->getModuleName();
+    }
+
+    /**
+     * Gets module HTTP user agent
+     * Used for performing cURL requests
+     *
+     * @return string
+     */
+    private function getUserAgent()
+    {
+        return $this->method->getConfigHelper()->getUserAgent();
     }
 
     /**
@@ -131,7 +132,7 @@ class ModuleInfo
      */
     private function getModuleInstalledVersion()
     {
-        return $this->moduleList->getOne('Paymentsense_Payments')['setup_version'];
+        return $this->method->getConfigHelper()->getModuleInstalledVersion();
     }
 
     /**
@@ -148,7 +149,7 @@ class ModuleInfo
         $psgw              = new Psgw($zendClientFactory);
 
         $headers = [
-            'User-Agent: ' . $this->getModuleName() . ' v.' . $this->getModuleInstalledVersion(),
+            'User-Agent: ' . $this->getUserAgent(),
             'Content-Type: text/plain; charset=utf-8',
             'Accept: text/plain, */*',
             'Accept-Encoding: identity',

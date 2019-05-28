@@ -23,6 +23,7 @@ use Paymentsense\Payments\Model\Psgw\Psgw;
 use Paymentsense\Payments\Model\Psgw\DataBuilder;
 use Paymentsense\Payments\Model\Psgw\TransactionType;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
+use Paymentsense\Payments\Model\Psgw\HpfResponses;
 use Paymentsense\Payments\Model\Traits\BaseMethod;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Checkout\Model\Session;
@@ -31,6 +32,8 @@ use Magento\Checkout\Model\Session;
  * Abstract Card class used by the Direct and MOTO payment methods
  *
  * @package Paymentsense\Payments\Model\Method
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 abstract class Card extends \Magento\Payment\Model\Method\Cc
 {
@@ -51,6 +54,11 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
     protected $_canSaveCc               = false;
 
     /**
+     * @var \Paymentsense\Payments\Helper\DiagnosticMessage
+     */
+    protected $_messageHelper;
+
+    /**
      * @var OrderSender
      */
     protected $_orderSender;
@@ -66,6 +74,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Paymentsense\Payments\Helper\Data $moduleHelper
+     * @param \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper
      * @param \Magento\Framework\Module\ModuleListInterface $moduleList
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
@@ -87,6 +96,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         Session $checkoutSession,
         \Paymentsense\Payments\Helper\Data $moduleHelper,
+        \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper,
         \Magento\Framework\Module\ModuleListInterface $moduleList,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
         \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
@@ -115,6 +125,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         $this->_moduleHelper    = $moduleHelper;
         $this->_orderSender     = $orderSender;
         $this->_configHelper    = $this->getModuleHelper()->getMethodConfig($this->getCode());
+        $this->_messageHelper   = $messageHelper;
     }
 
     /**
@@ -454,7 +465,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                 $response['TransactionType'] = $config->getTransactionType();
 
                 $this->updatePayment($order, $response);
-                if (!$isTransactionFailed) {
+                if (! $isTransactionFailed) {
                     $this->sendNewOrderEmail($order);
                 }
             } catch (\Exception $e) {
@@ -514,6 +525,86 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                 $result = 'AE,' .$result ;
             }
         }
+        return $result;
+    }
+
+    /**
+     * Gets the gateway settings message
+     *
+     * @param bool $textFormat Specifies whether the format of the message is text
+     *
+     * @return array
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
+    // phpcs:ignore Generic.Metrics.CyclomaticComplexity
+    public function getSettingsMessage($textFormat)
+    {
+        $result = [];
+        try {
+            $merchantIdFormatValid = $this->getModuleHelper()->isMerchantIdFormatValid($this->getCode());
+        } catch (\Exception $e) {
+            $merchantIdFormatValid = false;
+        }
+        if (! $merchantIdFormatValid) {
+            $result = $this->_messageHelper->buildErrorSettingsMessage(
+                'Gateway MerchantID is invalid. '
+                . 'Please make sure the Gateway MerchantID matches the ABCDEF-1234567 format.'
+            );
+        } else {
+            $merchantCredentialsValid = null;
+            $ggepResult = $this->performGetGatewayEntryPointsTxn();
+            $trxStatusCode = $ggepResult['StatusCode'];
+            if (TransactionResultCode::SUCCESS === $trxStatusCode) {
+                $merchantCredentialsValid = true;
+            } elseif (TransactionResultCode::FAILED === $trxStatusCode) {
+                if ($this->merchantCredentialsInvalid($ggepResult['Message'])) {
+                    $merchantCredentialsValid = false;
+                }
+            }
+            if (true === $merchantCredentialsValid) {
+                $result = $this->_messageHelper->buildSuccessSettingsMessage(
+                    'Gateway MerchantID and Gateway Password are valid.'
+                );
+            } else {
+                $hpfResult = $this->checkGatewaySettings();
+                switch ($hpfResult) {
+                    case HpfResponses::HPF_RESP_MID_MISSING:
+                    case HpfResponses::HPF_RESP_MID_NOT_EXISTS:
+                        $result = $this->_messageHelper->buildErrorSettingsMessage(
+                            'Gateway MerchantID is invalid.'
+                        );
+                        break;
+                    case HpfResponses::HPF_RESP_HASH_INVALID:
+                        if (false === $merchantCredentialsValid) {
+                            $result = $this->_messageHelper->buildErrorSettingsMessage(
+                                'Gateway Password is invalid.'
+                            );
+                        } else {
+                            $result = $this->_messageHelper->buildWarningSettingsMessage(
+                                'The gateway settings cannot be validated at this time.'
+                            );
+                        }
+                        break;
+                    case HpfResponses::HPF_RESP_NO_RESPONSE:
+                        if (false === $merchantCredentialsValid) {
+                            $result = $this->_messageHelper->buildErrorSettingsMessage(
+                                'Gateway MerchantID or/and Gateway Password are invalid.'
+                            );
+                        } else {
+                            $result = $this->_messageHelper->buildWarningSettingsMessage(
+                                'The gateway settings cannot be validated at this time.'
+                            );
+                        }
+                        break;
+                }
+            }
+        }
+
+        if ($textFormat) {
+            $result = $this->_messageHelper->getSettingsTextMessage($result);
+        }
+
         return $result;
     }
 }

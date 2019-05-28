@@ -45,12 +45,21 @@
     margin-top: 0;
 }
 
-.paymentsense-section .red-text {
+.paymentsense-section .settingsDiv {
+    margin-top: 0;
+}
+
+.paymentsense-section .error-text {
     font-weight: bold;
     color: #991015;
 }
 
-.paymentsense-section .green-text {
+.paymentsense-section .success-text {
     font-weight: bold;
     color: #147908;
+}
+
+.paymentsense-section .warning-text {
+    font-weight: bold;
+    color: #333333;
 }

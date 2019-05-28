@@ -170,7 +170,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $store = $this->getStoreManager()->getStore($storeId);
         $params = [
             '_store' => $store,
-            '_secure' => ($secure === null ) ? $this->isStoreSecure($storeId) : $secure
+            '_secure' => ($secure === null) ? $this->isStoreSecure($storeId) : $secure
         ];
         if (isset($queryParams) && is_array($queryParams)) {
             $params = array_merge($params, $queryParams);
@@ -181,18 +181,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Gets the return URL where the customer will be redirected from the Hosted Payment Form
      *
-     * @return string
-     *
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @return string|false
      */
-    public function getHostedFormCallbackUrl()
+    public function getHpfCallbackUrl()
     {
-        $store = $this->getStoreManager()->getStore();
-        $params = [
-            '_store' => $store,
-            '_secure' => $this->isStoreSecure()
-        ];
-        return $this->getUrlBuilder()->getUrl('paymentsense/hosted/index', $params);
+        try {
+            $store = $this->getStoreManager()->getStore();
+            $params = [
+                '_store' => $store,
+                '_secure' => $this->isStoreSecure()
+            ];
+            $result = $this->getUrlBuilder()->getUrl('paymentsense/hosted/index', $params);
+        } catch (\Exception $e) {
+            $result = false;
+        }
+        return $result;
     }
 
     /**
@@ -351,7 +354,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         if (!empty($fieldValue)) {
             $transactionObj = $this->getObjectManager()->create(Transaction::class);
             $transaction = $transactionObj->load($fieldValue, $fieldName);
-            if (!$transaction->getId()) {
+            if (! $transaction->getId()) {
                 $transaction = null;
             }
         }
@@ -475,5 +478,19 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $allowedMethodCurrencies = $this->getGloballyAllowedCurrencyCodes();
         }
         return in_array($currencyCode, $allowedMethodCurrencies);
+    }
+
+    /**
+     * Determines whether the format of the merchant ID matches the ABCDEF-1234567 format
+     *
+     * @param string $methodCode
+     * @return bool
+     *
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function isMerchantIdFormatValid($methodCode)
+    {
+        $methodConfig = $this->getMethodConfig($methodCode);
+        return (bool) preg_match('/^[a-zA-Z]{6}-[0-9]{7}$/', $methodConfig->getMerchantId());
     }
 }
