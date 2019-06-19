@@ -36,9 +36,10 @@ class DiagnosticMessage extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Message types
      */
-    const MESSAGE_TYPE_STATUS     = 'status';
-    const MESSAGE_TYPE_CONNECTION = 'connection';
-    const MESSAGE_TYPE_SETTINGS   = 'settings';
+    const MESSAGE_TYPE_STATUS      = 'status';
+    const MESSAGE_TYPE_CONNECTION  = 'connection';
+    const MESSAGE_TYPE_SETTINGS    = 'settings';
+    const MESSAGE_TYPE_SYSTEM_TIME = 'stime';
 
     /**
      * Gets the payment method status
@@ -53,17 +54,17 @@ class DiagnosticMessage extends \Magento\Framework\App\Helper\AbstractHelper
         switch (true) {
             case ! $configured:
                 $result = $this->buildErrorStatusMessage(
-                    'Unavailable (Payment method not configured)'
+                    __('Unavailable (Payment method not configured)')
                 );
                 break;
             case ! $secure:
                 $result = $this->buildErrorStatusMessage(
-                    'Unavailable (SSL/TLS not configured)'
+                    __('Unavailable (SSL/TLS not configured)')
                 );
                 break;
             default:
                 $result = $this->buildSuccessStatusMessage(
-                    'Enabled'
+                    __('Enabled')
                 );
                 break;
         }
@@ -81,11 +82,11 @@ class DiagnosticMessage extends \Magento\Framework\App\Helper\AbstractHelper
     {
         if ($connectionSuccessful) {
             $result = $this->buildSuccessConnectionMessage(
-                'Successful'
+                __('Successful')
             );
         } else {
             $result = $this->buildErrorConnectionMessage(
-                'Unavailable (No Connection to the gateway. Please check outbound port 4430).'
+                __('Unavailable (No Connection to the gateway. Please check outbound port 4430).')
             );
         }
         return $result;
@@ -191,6 +192,26 @@ class DiagnosticMessage extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Builds a localised error system time message
+     *
+     * @param  int $seconds
+     * @return array
+     */
+    public function buildErrorSystemTimeMessage($seconds)
+    {
+        return $this->buildMessage(
+            sprintf(
+                __(
+                    'The system time is out of sync with the gateway with %+d seconds. Please check your system time.'
+                ),
+                $seconds
+            ),
+            self::ERROR_CLASS_NAME,
+            self::MESSAGE_TYPE_SYSTEM_TIME
+        );
+    }
+
+    /**
      * Gets the text message from a status message
      *
      * @param  array $arr
@@ -234,7 +255,7 @@ class DiagnosticMessage extends \Magento\Framework\App\Helper\AbstractHelper
     private function buildMessage($text, $className, $messageType)
     {
         return [
-            $messageType . 'Text'      => __($text),
+            $messageType . 'Text'      => $text,
             $messageType . 'ClassName' => $className
         ];
     }

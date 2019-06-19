@@ -34,17 +34,15 @@ class Info extends \Paymentsense\Payments\Controller\InfoAction
     /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Paymentsense\Payments\Model\ModuleInfo $moduleInfo
      * @param \Paymentsense\Payments\Model\Method\Hosted $method
      */
     // @codingStandardsIgnoreStart
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
-        \Paymentsense\Payments\Model\ModuleInfo $moduleInfo,
         \Paymentsense\Payments\Model\Method\Hosted $method
     ) {
-        parent::__construct($context, $logger, $moduleInfo, $method);
+        parent::__construct($context, $logger, $method);
     }
     // @codingStandardsIgnoreEnd
 }

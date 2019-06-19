@@ -256,6 +256,7 @@ class Psgw
         $trxAttempt           = 0;
         $validResponse        = false;
         $trxAttemptsExhausted = false;
+        $responseHeaders      = [];
 
         // Initial message. Will be replaced by the gateway message or cURL error message.
         $trxMessage = 'The communication with the Payment Gateway failed. Check outbound connection.';
@@ -283,7 +284,8 @@ class Psgw
                 try {
                     $response = $this->executeHttpRequest($data);
                     if ($response->getStatus() === \Zend\Http\Response::STATUS_CODE_200) {
-                        $responseBody  = $response->getBody();
+                        $responseHeaders[$url] = $response->getHeaders();
+                        $responseBody          = $response->getBody();
 
                         if (!empty($responseBody)) {
                             $trxStatusCode = $this->getXmlValue('StatusCode', $responseBody, '[0-9]+');
@@ -320,12 +322,13 @@ class Psgw
         }
 
         $result = [
-            'StatusCode'     => $trxStatusCode,
-            'Message'        => $trxMessage,
-            'Detail'         => $trxDetail,
-            'CrossReference' => $trxCrossReference,
-            'ACSURL'         => $this->getXmlValue('ACSURL', $responseBody, '.+'),
-            'PaReq'          => $this->getXmlValue('PaReq', $responseBody, '.+')
+            'StatusCode'      => $trxStatusCode,
+            'Message'         => $trxMessage,
+            'Detail'          => $trxDetail,
+            'CrossReference'  => $trxCrossReference,
+            'ACSURL'          => $this->getXmlValue('ACSURL', $responseBody, '.+'),
+            'PaReq'           => $this->getXmlValue('PaReq', $responseBody, '.+'),
+            'ResponseHeaders' => $responseHeaders
         ];
 
         return $result;

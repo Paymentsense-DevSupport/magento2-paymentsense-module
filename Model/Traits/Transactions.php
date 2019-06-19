@@ -19,6 +19,7 @@
 
 namespace Paymentsense\Payments\Model\Traits;
 
+use DateTime;
 use Paymentsense\Payments\Model\Psgw\Psgw;
 use Paymentsense\Payments\Model\Psgw\DataBuilder;
 use Paymentsense\Payments\Model\Psgw\TransactionType;
@@ -32,6 +33,19 @@ use Magento\Sales\Model\Order;
  */
 trait Transactions
 {
+    /**
+     * System time threshold.
+     * Specifies the maximal difference between the local time and the gateway time
+     * in seconds where the system time is considered Ok.
+     */
+    protected $_systemTimeThreshold = 300;
+
+    /**
+     * @var array $dateTimePairs Pairs of local and remote timestamps
+     * Used for the determination of the system time status
+     */
+    protected $_dateTimePairs = [];
+
     /**
      * @var \Paymentsense\Payments\Model\Config
      */
@@ -480,7 +494,15 @@ trait Transactions
         ];
 
         $psgw->setTrxMaxAttempts(1);
-        return $psgw->performGetGatewayEntryPointsTxn($trxData);
+        $result = $psgw->performGetGatewayEntryPointsTxn($trxData);
+
+        foreach ($result['ResponseHeaders'] as $url => $header) {
+            if (array_key_exists('Date', $header)) {
+                $this->addDateTimePair($url, $header['Date']);
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -511,7 +533,8 @@ trait Transactions
      */
     public function checkGatewaySettings()
     {
-        $result = HpfResponses::HPF_RESP_NO_RESPONSE;
+        $result          = HpfResponses::HPF_RESP_NO_RESPONSE;
+        $responseHeaders = null;
         try {
             $objectManager     = $this->getModuleHelper()->getObjectManager();
             $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
@@ -534,8 +557,14 @@ trait Transactions
                 'xml'     => $postData
             ];
 
-            $response = $psgw->executeHttpRequest($data);
-            $responseBody = $response->getBody();
+            $response        = $psgw->executeHttpRequest($data);
+            $responseHeaders = $response->getHeaders();
+
+            if ($responseHeaders && array_key_exists('Date', $responseHeaders)) {
+                $this->addDateTimePair(GatewayEndpoints::getPaymentFormUrl(), $responseHeaders['Date']);
+            }
+
+            $responseBody    = $response->getBody();
             if ($responseBody) {
                 $hpf_err_msg = $this->getHpfErrorMessage($response);
                 if (is_string($hpf_err_msg)) {
@@ -781,5 +810,86 @@ trait Transactions
                 break;
         }
         return $result;
+    }
+
+    /**
+     * Adds a pair of a local and a remote timestamp
+     *
+     * @param string $url Remote URL
+     * @param string $dateTime Timestamp
+     */
+    public function addDateTimePair($url, $dateTime)
+    {
+        $hostname                        = $this->getModuleHelper()->getHostname($url);
+        $dateTime                        = DateTime::createFromFormat('D, d M Y H:i:s e', $dateTime);
+        $this->_dateTimePairs[$hostname] = $this->getModuleHelper()->buildDateTimePair($dateTime);
+    }
+
+    /**
+     * Gets the pairs of local and remote timestamps
+     *
+     * @return array
+     */
+    public function getDateTimePairs()
+    {
+        return $this->_dateTimePairs;
+    }
+
+    /**
+     * Gets the system time status
+     *
+     * @return string
+     */
+    public function getSystemTimeStatus()
+    {
+        $timeDiff = $this->getSystemTimeDiff();
+        if (is_numeric($timeDiff)) {
+            $result = abs($timeDiff) <= $this->getSystemTimeThreshold()
+                ? 'OK'
+                : sprintf('Out of sync with %+d seconds', $timeDiff);
+        } else {
+            $result = 'Unknown';
+        }
+
+        return $result;
+    }
+
+    /**
+     * Gets the difference between the system time and the gateway time in seconds
+     *
+     * @return string
+     */
+    public function getSystemTimeDiff()
+    {
+        $result = null;
+        $dateTimePairs = $this->getDateTimePairs();
+        if ($dateTimePairs) {
+            $dateTimePair = array_shift($dateTimePairs);
+            $result = $this->calculateDateDiff($dateTimePair);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Calculates the difference between DateTimes in seconds
+     *
+     * @param array $dateTimePair
+     * @return int
+     */
+    public function calculateDateDiff($dateTimePair)
+    {
+        list($localDateTime, $remoteDateTime) = $dateTimePair;
+        return $localDateTime->format('U') - $remoteDateTime->format('U');
+    }
+
+    /**
+     * Gets the system time threshold
+     *
+     * @return int
+     */
+    public function getSystemTimeThreshold()
+    {
+        return $this->_systemTimeThreshold;
     }
 }

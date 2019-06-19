@@ -87,6 +87,11 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 2.0.7
+##### Added
+- System time check
+
+
 ### 2.0.6
 ##### Added
 - Gateway settings check

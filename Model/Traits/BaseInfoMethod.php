@@ -17,47 +17,19 @@
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
-namespace Paymentsense\Payments\Model;
+namespace Paymentsense\Payments\Model\Traits;
 
 use Paymentsense\Payments\Model\Psgw\Psgw;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 
 /**
- * Module Information model
+ * Base method with module information
  *
  * @package Paymentsense\Payments\Model
  */
-class ModuleInfo
+trait BaseInfoMethod
 {
-    /**
-     * @var Method\Direct $method
-     */
-    private $method;
-
-    /**
-     * @var \Magento\Framework\App\ProductMetadataInterface
-     */
-    private $productMetadata;
-
-    /**
-     * @var \Magento\Framework\ObjectManagerInterface
-     */
-    private $objectManager;
-
-    /**
-     * @param \Magento\Framework\App\ProductMetadataInterface
-     * @param \Magento\Framework\ObjectManagerInterface
-     * @param Method\Direct $method
-     */
-    public function __construct(
-        \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface,
-        \Magento\Framework\ObjectManagerInterface $objectManager,
-        Method\Direct $method
-    ) {
-        $this->productMetadata = $productMetadataInterface;
-        $this->objectManager   = $objectManager;
-        $this->method          = $method;
-    }
+    use BaseMethod;
 
     /**
      * Gets module information
@@ -111,7 +83,7 @@ class ModuleInfo
      */
     private function getModuleName()
     {
-        return $this->method->getConfigHelper()->getModuleName();
+        return $this->getConfigHelper()->getModuleName();
     }
 
     /**
@@ -122,7 +94,7 @@ class ModuleInfo
      */
     private function getUserAgent()
     {
-        return $this->method->getConfigHelper()->getUserAgent();
+        return $this->getConfigHelper()->getUserAgent();
     }
 
     /**
@@ -132,7 +104,7 @@ class ModuleInfo
      */
     private function getModuleInstalledVersion()
     {
-        return $this->method->getConfigHelper()->getModuleInstalledVersion();
+        return $this->getConfigHelper()->getModuleInstalledVersion();
     }
 
     /**
@@ -144,7 +116,7 @@ class ModuleInfo
     {
         $result = 'N/A';
 
-        $objectManager     = $this->objectManager;
+        $objectManager     = $this->getModuleHelper()->getObjectManager();
         $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
         $psgw              = new Psgw($zendClientFactory);
 
@@ -209,7 +181,7 @@ class ModuleInfo
      */
     private function getConnectivityStatus()
     {
-        $response = $this->method->performGetGatewayEntryPointsTxn();
+        $response = $this->performGetGatewayEntryPointsTxn();
         if (TransactionResultCode::SUCCESS === $response['StatusCode']) {
             $result = 'Successful';
         } else {

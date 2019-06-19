@@ -101,4 +101,32 @@ abstract class StatusAction extends CsrfAwareAction
 
         return $this->_messageHelper->getConnectionMessage($connectionSuccessful);
     }
+
+    /**
+     * Gets the settings message
+     *
+     * @return array
+     */
+    protected function getSettingsMessage()
+    {
+        return $this->_method->getSettingsMessage(false);
+    }
+
+    /**
+     * Gets the system time message if the time difference exceeds the threshold
+     *
+     * @return array
+     */
+    protected function getSystemTimeMessage()
+    {
+        $result   = [];
+        $timeDiff = $this->_method->getSystemTimeDiff();
+        if (is_numeric($timeDiff) && (abs($timeDiff) > $this->_method->getSystemTimeThreshold())) {
+            $result = $this->_messageHelper->buildErrorSystemTimeMessage(
+                $timeDiff
+            );
+        }
+
+        return $result;
+    }
 }

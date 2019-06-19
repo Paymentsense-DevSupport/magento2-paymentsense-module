@@ -22,7 +22,7 @@ namespace Paymentsense\Payments\Model\Method;
 use Paymentsense\Payments\Model\Psgw\TransactionStatus;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 use Paymentsense\Payments\Model\Psgw\HpfResponses;
-use Paymentsense\Payments\Model\Traits\BaseMethod;
+use Paymentsense\Payments\Model\Traits\BaseInfoMethod;
 use Magento\Sales\Model\Order;
 use Magento\Checkout\Model\Session;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
@@ -33,10 +33,11 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
  * @package Paymentsense\Payments\Model\Method
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.TooManyFields)
  */
 class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
 {
-    use BaseMethod;
+    use BaseInfoMethod;
 
     const CODE = 'paymentsense_hosted';
 
@@ -71,6 +72,11 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
     protected $_orderSender;
 
     /**
+     * @var \Magento\Framework\App\ProductMetadataInterface
+     */
+    protected $productMetadata;
+
+    /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\App\Action\Context $actionContext
      * @param \Magento\Framework\Registry $registry
@@ -82,9 +88,10 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Paymentsense\Payments\Helper\Data $moduleHelper
      * @param \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper
+     * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
+     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface,
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
-     * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
      * @param array $data
      *
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -102,6 +109,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
         \Paymentsense\Payments\Helper\Data $moduleHelper,
         \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper,
         OrderSender $orderSender,
+        \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
@@ -126,6 +134,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
         $this->_orderSender     = $orderSender;
         $this->_configHelper    = $this->getModuleHelper()->getMethodConfig($this->getCode());
         $this->_messageHelper   = $messageHelper;
+        $this->productMetadata  = $productMetadataInterface;
 
         $this->configureCrossRefTxnAvailability();
     }
@@ -413,8 +422,10 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
         }
         if (! $merchantIdFormatValid) {
             $result = $this->_messageHelper->buildErrorSettingsMessage(
-                'Gateway MerchantID is invalid. '
-                . 'Please make sure the Gateway MerchantID matches the ABCDEF-1234567 format.'
+                __(
+                    'Gateway MerchantID is invalid. '
+                    . 'Please make sure the Gateway MerchantID matches the ABCDEF-1234567 format.'
+                )
             );
         } else {
             $ggepResult = $this->performGetGatewayEntryPointsTxn();
@@ -432,43 +443,59 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
             switch ($hpfResult) {
                 case HpfResponses::HPF_RESP_OK:
                     $result = $this->_messageHelper->buildSuccessSettingsMessage(
-                        'Gateway MerchantID, Gateway Password, '
-                        . 'Gateway PreSharedKey and Gateway Hash Method are valid.'
+                        __(
+                            'Gateway MerchantID, Gateway Password, '
+                            . 'Gateway PreSharedKey and Gateway Hash Method are valid.'
+                        )
                     );
                     break;
                 case HpfResponses::HPF_RESP_MID_MISSING:
                 case HpfResponses::HPF_RESP_MID_NOT_EXISTS:
                     $result = $this->_messageHelper->buildErrorSettingsMessage(
-                        'Gateway MerchantID is invalid.'
+                        __(
+                            'Gateway MerchantID is invalid.'
+                        )
                     );
                     break;
                 case HpfResponses::HPF_RESP_HASH_INVALID:
                     if (true === $merchantCredentialsValid) {
                         $result = $this->_messageHelper->buildErrorSettingsMessage(
-                            'Gateway PreSharedKey or/and Gateway Hash Method are invalid.'
+                            __(
+                                'Gateway PreSharedKey or/and Gateway Hash Method are invalid.'
+                            )
                         );
                     } elseif (false === $merchantCredentialsValid) {
                         $result = $this->_messageHelper->buildErrorSettingsMessage(
-                            'Gateway Password is invalid.'
+                            __(
+                                'Gateway Password is invalid.'
+                            )
                         );
                     } else {
                         $result = $this->_messageHelper->buildErrorSettingsMessage(
-                            'Gateway Password, Gateway PreSharedKey or/and Gateway Hash Method are invalid.'
+                            __(
+                                'Gateway Password, Gateway PreSharedKey or/and Gateway Hash Method are invalid.'
+                            )
                         );
                     }
                     break;
                 case HpfResponses::HPF_RESP_NO_RESPONSE:
                     if (true === $merchantCredentialsValid) {
                         $result = $this->_messageHelper->buildWarningSettingsMessage(
-                            'Gateway PreSharedKey and Gateway Hash Method cannot be validated at this time.'
+                            __(
+                                'Gateway PreSharedKey and Gateway Hash Method cannot be validated at this time.'
+                            )
                         );
                     } elseif (false === $merchantCredentialsValid) {
                         $result = $this->_messageHelper->buildErrorSettingsMessage(
-                            'Gateway MerchantID or/and Gateway Password are invalid.'
+                            __(
+                                'Gateway MerchantID or/and Gateway Password are invalid.'
+                            )
                         );
                     } else {
                         $result = $this->_messageHelper->buildWarningSettingsMessage(
-                            'The gateway settings cannot be validated at this time.'
+                            __(
+                                'The gateway settings cannot be validated at this time.'
+                            )
                         );
                     }
                     break;

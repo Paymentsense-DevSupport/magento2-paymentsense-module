@@ -27,6 +27,8 @@ use Magento\Sales\Model\Order;
  * Helper common for all payment methods
  *
  * @package Paymentsense\Payments\Helper
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -492,5 +494,30 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $methodConfig = $this->getMethodConfig($methodCode);
         return (bool) preg_match('/^[a-zA-Z]{6}-[0-9]{7}$/', $methodConfig->getMerchantId());
+    }
+
+    /**
+     * Retrieves the hostname from an URL
+     *
+     * @param string $url URL
+     * @return string
+     */
+    public function getHostname($url)
+    {
+        // @codingStandardsIgnoreLine
+        $parts = parse_url($url);
+        return isset($parts['host']) ? strtolower($parts['host']) : '';
+    }
+
+    /**
+     * Builds a pair of a local and a remote timestamp
+     *
+     * @param \DateTime $remoteDateTime
+     * @return array
+     */
+    public function buildDateTimePair($remoteDateTime)
+    {
+        $localDateTime = date_create();
+        return [$localDateTime, $remoteDateTime];
     }
 }

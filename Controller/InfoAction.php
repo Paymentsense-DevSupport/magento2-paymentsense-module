@@ -38,11 +38,6 @@ abstract class InfoAction extends CsrfAwareAction
     ];
 
     /**
-     * @var \Paymentsense\Payments\Model\ModuleInfo
-     */
-    protected $moduleInfo;
-
-    /**
      * @var \Paymentsense\Payments\Model\Method\Hosted|\Paymentsense\Payments\Model\Method\Direct|\Paymentsense\Payments\Model\Method\Moto
      */
     protected $method;
@@ -50,16 +45,13 @@ abstract class InfoAction extends CsrfAwareAction
     /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Paymentsense\Payments\Model\ModuleInfo $moduleInfo
      * @param \Magento\Payment\Model\Method\AbstractMethod $method
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
-        \Paymentsense\Payments\Model\ModuleInfo $moduleInfo,
         $method
     ) {
-        $this->moduleInfo = $moduleInfo;
         $this->method = $method;
         parent::__construct($context, $logger);
     }
@@ -71,9 +63,14 @@ abstract class InfoAction extends CsrfAwareAction
     {
         $extendedInfoRequest = 'true' === $this->getRequest()->getParam('extended_info');
         $outputFormat        = $this->getRequest()->getParam('output');
-        $info                = $this->moduleInfo->getInfo($extendedInfoRequest);
+        $info                = $this->method->getInfo($extendedInfoRequest);
         if ($extendedInfoRequest) {
-            $settingsMessageInfo = ['Gateway settings message' => $this->method->getSettingsMessage(true)];
+            $settingsMessage     = $this->method->getSettingsMessage(true);
+            $systemTimeStatus    = $this->method->getSystemTimeStatus();
+            $settingsMessageInfo = [
+                'System Time'              => $systemTimeStatus,
+                'Gateway settings message' => $settingsMessage
+            ];
             $info = array_merge($info, $settingsMessageInfo);
         }
         $this->outputInfo($info, $outputFormat);
@@ -97,7 +94,7 @@ abstract class InfoAction extends CsrfAwareAction
                 break;
             case self::TYPE_TEXT_PLAIN:
             default:
-                $body = $this->moduleInfo->convertArrayToString($info);
+                $body = $this->method->convertArrayToString($info);
                 break;
         }
 

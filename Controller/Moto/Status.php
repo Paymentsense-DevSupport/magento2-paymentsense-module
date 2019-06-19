@@ -67,7 +67,8 @@ class Status extends \Paymentsense\Payments\Controller\StatusAction
     {
         $arr = $this->_messageHelper->getStatusMessage($this->_method->isConfigured(), $this->_method->isSecure());
         $arr = array_merge($arr, $this->getConnectionMessage());
-        $arr = array_merge($arr, $this->_method->getSettingsMessage(false));
+        $arr = array_merge($arr, $this->getSettingsMessage());
+        $arr = array_merge($arr, $this->getSystemTimeMessage());
         $this->getResponse()
             ->setHeader('Content-Type', 'application/json')
             ->setBody(json_encode($arr));

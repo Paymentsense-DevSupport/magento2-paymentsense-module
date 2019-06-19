@@ -83,9 +83,8 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
     protected function _getHeaderTitleHtml($element)
     {
         $htmlId = $element->getHtmlId();
-        $initialStatus = $this->method->isEnabled() ? __('Testing...') : __('Disabled');
-        $initialConnection = $this->method->isEnabled() ? __('Testing...') : __('Unknown');
-        $initialSettings = $this->method->isEnabled() ? __('Testing...') : __('Unknown');
+        $initialStatusMsg = $this->method->isEnabled() ? __('Testing...') : __('Disabled');
+        $initialCommonMsg = $this->method->isEnabled() ? __('Testing...') : __('Unknown');
         $html = '<div class="config-heading">';
         $html .= '<div class="button-container"><button type="button"' .
             ' class="button action-configure' .
@@ -111,13 +110,16 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
         $html .= '<div class="config-alt ' . $this->getPaymentCardLogosCssClass() . '"></div>';
         $html .= '<div class="statusDiv">';
         $html .= '<span>' . __('Payment Method Status:') . ' </span>';
-        $html .= '<span id="' . $htmlId . '-status">' . $initialStatus . '</span>';
+        $html .= '<span id="' . $htmlId . '-status">' . $initialStatusMsg . '</span>';
         $html .= '</div><div class="connectionDiv">';
         $html .= '<span>' . __('Connection to Gateway Servers:') . ' </span>';
-        $html .= '<span id="' . $htmlId . '-connection">' . $initialConnection . '</span>';
+        $html .= '<span id="' . $htmlId . '-connection">' . $initialCommonMsg . '</span>';
         $html .= '</div><div class="settingsDiv">';
         $html .= '<span>' . __('Gateway Settings:') . ' </span>';
-        $html .= '<span id="' . $htmlId . '-settings">' . $initialSettings . '</span>';
+        $html .= '<span id="' . $htmlId . '-settings">' . $initialCommonMsg . '</span>';
+        $html .= '</div><div id="' . $htmlId . '-stime-div" class="stimeDiv" style="display: none">';
+        $html .= '<span>' . __('System Time:') . ' </span>';
+        $html .= '<span id="' . $htmlId . '-stime">' . $initialCommonMsg . '</span>';
         $html .= '</div></div></div>';
 
         return $html;
@@ -187,12 +189,18 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
                     var statusSpan = document.getElementById('" . $htmlId . "-status');
                     var connectionSpan = document.getElementById('" . $htmlId . "-connection');
                     var settingsSpan = document.getElementById('" . $htmlId . "-settings');
+                    var stimeSpan = document.getElementById('" . $htmlId . "-stime');
                     statusSpan.innerHTML = data.statusText;
                     statusSpan.className = data.statusClassName;
                     connectionSpan.innerHTML = data.connectionText;
                     connectionSpan.className = data.connectionClassName;
                     settingsSpan.innerHTML = data.settingsText;
                     settingsSpan.className = data.settingsClassName;
+                    if (data.stimeText != null) {
+                        stimeSpan.innerHTML = data.stimeText;
+                        stimeSpan.className = data.stimeClassName;
+                        document.getElementById('" . $htmlId . "-stime-div').style.display = \"block\";
+                    }
                 } else {
                     showUnknownInfo(data);
                 }
