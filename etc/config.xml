@@ -36,6 +36,7 @@ GNU General Public License for more details.
                 <country_mandatory>0</country_mandatory>
                 <allowspecific>0</allowspecific>
                 <allow_specific_currency>0</allow_specific_currency>
+                <use_base_currency>0</use_base_currency>
                 <log_level>1</log_level>
                 <port_4430_not_open>0</port_4430_not_open>
                 <group>paymentsense</group>

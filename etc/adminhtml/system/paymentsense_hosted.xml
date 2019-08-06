@@ -155,6 +155,12 @@ GNU General Public License for more details.
             </depends>
             <can_be_empty>0</can_be_empty>
         </field>
+        <field id="use_base_currency" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+            <label>Use website base currency?</label>
+            <tooltip><![CDATA[Take the payment in the order's base currency? (Magento displays this on the checkout when the user has selected an alternative currency)]]></tooltip>
+            <config_path>payment/paymentsense_hosted/use_base_currency</config_path>
+            <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+        </field>
 
         <field id="email_address_editable" translate="label" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Email Address can be altered on payment form:</label>

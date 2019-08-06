@@ -661,9 +661,11 @@ trait Transactions
         $billingAddress = $order->getBillingAddress();
         $config = $this->getConfigHelper();
         $orderId = $order->getRealOrderId();
+        $total = $config->getUseBaseCurrency() ? $order->getBaseTotalDue() : $order->getTotalDue();
+        $currency = $config->getUseBaseCurrency() ? $order->getBaseCurrencyCode() : $order->getOrderCurrencyCode();
         return [
-            'Amount'                    => $order->getTotalDue() * 100,
-            'CurrencyCode'              => DataBuilder::getCurrencyIsoCode($order->getOrderCurrencyCode()),
+            'Amount'                    => $total * 100,
+            'CurrencyCode'              => DataBuilder::getCurrencyIsoCode($currency),
             'OrderID'                   => $orderId,
             'TransactionType'           => $config->getTransactionType(),
             'TransactionDateTime'       => date('Y-m-d H:i:s P'),

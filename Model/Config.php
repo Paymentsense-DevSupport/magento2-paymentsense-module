@@ -419,6 +419,16 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
     }
 
     /**
+     * Determines whether to take payment in the order base currency or not
+     *
+     * @return bool
+     */
+    public function getUseBaseCurrency()
+    {
+        return $this->isChecked($this->_methodCode, 'use_base_currency');
+    }
+
+    /**
      * Gets Log Level
      *
      * @return int
