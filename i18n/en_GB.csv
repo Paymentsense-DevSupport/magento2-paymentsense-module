@@ -14,7 +14,7 @@ Collapse,Collapse
 "Cancel order & restore cart","Cancel order & restore cart"
 "An error occurred while processing 3-D Secure authentication.","An error occurred while processing 3-D Secure authentication."
 "Continue to the payment methods","Continue to the payment methods"
-"Transaction type is ""%s"" not supported","Transaction type is ""%s"" not supported"
+"Error: Transaction type ""%s"" is not supported","Error: Transaction type ""%s"" is not supported"
 "Please ensure you are using a Paymentsense MOTO account for MOTO transactions (this will have a different merchant id to your ECOM account).","Please ensure you are using a Paymentsense MOTO account for MOTO transactions (this will have a different merchant id to your ECOM account)."
 "Payment Method Status:","Payment Method Status:"
 "Connection to Gateway Servers:","Connection to Gateway Servers:"
@@ -38,3 +38,4 @@ Collapse,Collapse
 "Gateway MerchantID or/and Gateway Password are invalid.","Gateway MerchantID or/and Gateway Password are invalid."
 "Gateway MerchantID and Gateway Password are valid.","Gateway MerchantID and Gateway Password are valid."
 "The gateway settings cannot be validated at this time.","The gateway settings cannot be validated at this time."
+"The system time is out of sync with the gateway with %+d seconds. Please check your system time.","The system time is out of sync with the gateway with %+d seconds. Please check your system time."

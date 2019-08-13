@@ -167,10 +167,10 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                 $action = \Magento\Payment\Model\Method\AbstractMethod::ACTION_AUTHORIZE_CAPTURE;
                 break;
             default:
-                $message = sprintf($this->getHelper()->__('Transaction type is "%s" not supported', $transactionType));
+                $message = sprintf('Error: Transaction type "%s" is not supported', $transactionType);
                 $this->getLogger()->error($message);
                 $this->getModuleHelper()->throwWebapiException(
-                    sprintf('Transaction type is "%s" not supported', $transactionType)
+                    sprintf(__('Error: Transaction type "%s" is not supported'), $transactionType)
                 );
         }
 
