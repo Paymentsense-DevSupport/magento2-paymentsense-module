@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2019 Paymentsense Ltd.
+ * Copyright (C) 2020 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2019 Paymentsense Ltd.
+ * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -22,40 +22,8 @@ namespace Paymentsense\Payments\Controller;
 /**
  * Abstract module information action class
  */
-abstract class InfoAction extends CsrfAwareAction
+abstract class InfoAction extends ReportAction
 {
-    const TYPE_APPLICATION_JSON = 'application/json';
-    const TYPE_TEXT_PLAIN       = 'text/plain';
-
-    /**
-     * Supported content types of the output of the module information
-     *
-     * @var array
-     */
-    protected $contentTypes = [
-        'json' => self::TYPE_APPLICATION_JSON,
-        'text' => self::TYPE_TEXT_PLAIN
-    ];
-
-    /**
-     * @var \Paymentsense\Payments\Model\Method\Hosted|\Paymentsense\Payments\Model\Method\Direct|\Paymentsense\Payments\Model\Method\Moto
-     */
-    protected $method;
-
-    /**
-     * @param \Magento\Framework\App\Action\Context $context
-     * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Payment\Model\Method\AbstractMethod $method
-     */
-    public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Psr\Log\LoggerInterface $logger,
-        $method
-    ) {
-        $this->method = $method;
-        parent::__construct($context, $logger);
-    }
-
     /**
      * Handles the module information request
      */
@@ -74,34 +42,5 @@ abstract class InfoAction extends CsrfAwareAction
             $info = array_merge($info, $settingsMessageInfo);
         }
         $this->outputInfo($info, $outputFormat);
-    }
-
-    /**
-     * Outputs module information
-     *
-     * @param array $info Module information
-     * @param string $outputFormat Output format
-     */
-    protected function outputInfo($info, $outputFormat)
-    {
-        $contentType = array_key_exists($outputFormat, $this->contentTypes)
-            ? $this->contentTypes[$outputFormat]
-            : self::TYPE_TEXT_PLAIN;
-
-        switch ($contentType) {
-            case self::TYPE_APPLICATION_JSON:
-                $body = json_encode($info);
-                break;
-            case self::TYPE_TEXT_PLAIN:
-            default:
-                $body = $this->method->convertArrayToString($info);
-                break;
-        }
-
-        $this->getResponse()
-            ->setHeader('Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store', true)
-            ->setHeader('Pragma', 'no-cache', true)
-            ->setHeader('Content-Type', $contentType)
-            ->setBody($body);
     }
 }

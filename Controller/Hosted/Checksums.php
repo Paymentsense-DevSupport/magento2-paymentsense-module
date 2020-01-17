@@ -20,11 +20,11 @@
 namespace Paymentsense\Payments\Controller\Hosted;
 
 /**
- * Handles the module information request
+ * Handles the file checksums request
  *
- * @package Paymentsense\Payments\Controller\Hosted
+ * @package Paymentsense\Payments\Controller\Direct
  */
-class Info extends \Paymentsense\Payments\Controller\InfoAction
+class Checksums extends \Paymentsense\Payments\Controller\ChecksumsAction
 {
     /**
      * @var \Paymentsense\Payments\Model\Method\Hosted

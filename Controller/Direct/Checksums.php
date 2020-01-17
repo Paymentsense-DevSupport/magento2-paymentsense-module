@@ -17,30 +17,30 @@
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
-namespace Paymentsense\Payments\Controller\Hosted;
+namespace Paymentsense\Payments\Controller\Direct;
 
 /**
- * Handles the module information request
+ * Handles the file checksums request
  *
- * @package Paymentsense\Payments\Controller\Hosted
+ * @package Paymentsense\Payments\Controller\Direct
  */
-class Info extends \Paymentsense\Payments\Controller\InfoAction
+class Checksums extends \Paymentsense\Payments\Controller\ChecksumsAction
 {
     /**
-     * @var \Paymentsense\Payments\Model\Method\Hosted
+     * @var \Paymentsense\Payments\Model\Method\Direct
      */
     protected $method;
 
     /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Paymentsense\Payments\Model\Method\Hosted $method
+     * @param \Paymentsense\Payments\Model\Method\Direct $method
      */
     // @codingStandardsIgnoreStart
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
-        \Paymentsense\Payments\Model\Method\Hosted $method
+        \Paymentsense\Payments\Model\Method\Direct $method
     ) {
         parent::__construct($context, $logger, $method);
     }

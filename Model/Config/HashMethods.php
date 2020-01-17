@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2019 Paymentsense Ltd.
+ * Copyright (C) 2020 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2019 Paymentsense Ltd.
+ * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -35,7 +35,6 @@ class HashMethods implements \Magento\Framework\Option\ArrayInterface
     {
         return [
             ['value' => 'SHA1', 'label' => 'SHA1'],
-            ['value' => 'MD5', 'label' => 'MD5'],
             ['value' => 'HMACSHA1', 'label' => 'HMACSHA1'],
             ['value' => 'HMACMD5', 'label' => 'HMACMD5']
         ];

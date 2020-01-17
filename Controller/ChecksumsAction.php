@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2019 Paymentsense Ltd.
+ * Copyright (C) 2020 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,26 +13,26 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2019 Paymentsense Ltd.
+ * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 namespace Paymentsense\Payments\Controller;
 
 /**
- * Abstract CsrfAwareAction class with CSRF support
+ * Abstract module file checksums class
  */
-abstract class CsrfAwareAction extends Action implements \Magento\Framework\App\CsrfAwareActionInterface
+abstract class ChecksumsAction extends ReportAction
 {
-    // @codingStandardsIgnoreLine
-    public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
+    /**
+     * Handles the file checksums request
+     */
+    public function execute()
     {
-        return true;
-    }
-
-    // @codingStandardsIgnoreLine
-    public function createCsrfValidationException(\Magento\Framework\App\RequestInterface $request): ?\Magento\Framework\App\Request\InvalidRequestException
-    {
-        return null;
+        $fileList     = $this->getRequest()->getParam('data');
+        $scope        = $this->getRequest()->getParam('scope');
+        $outputFormat = $this->getRequest()->getParam('output');
+        $info         = $this->method->getChecksums($fileList, $scope);
+        $this->outputInfo($info, $outputFormat);
     }
 }

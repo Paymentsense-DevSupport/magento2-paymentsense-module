@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2019 Paymentsense Ltd.
+ * Copyright (C) 2020 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2019 Paymentsense Ltd.
+ * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -780,7 +780,7 @@ trait Transactions
 
     /**
      * Calculates the hash digest.
-     * Supported hash methods: MD5, SHA1, HMACMD5, HMACSHA1
+     * Supported hash methods: SHA1, HMACMD5, HMACSHA1
      *
      * @param string $data Data to be hashed.
      * @param string $hashMethod Hash method.
@@ -790,14 +790,13 @@ trait Transactions
     public function calculateHashDigest($data, $hashMethod, $key)
     {
         $result     = '';
-        $includeKey = in_array($hashMethod, ['MD5', 'SHA1'], true);
+        $includeKey = $hashMethod == 'SHA1';
         if ($includeKey) {
             $data = 'PreSharedKey=' . $key . '&' . $data;
         }
         switch ($hashMethod) {
             case 'MD5':
-                // @codingStandardsIgnoreLine
-                $result = md5($data);
+                // No longer supported. The use of the md5 function is forbidden by Magento.
                 break;
             case 'SHA1':
                 $result = sha1($data);

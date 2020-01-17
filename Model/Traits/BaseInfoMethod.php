@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2019 Paymentsense Ltd.
+ * Copyright (C) 2020 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2019 Paymentsense Ltd.
+ * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -44,7 +44,6 @@ trait BaseInfoMethod
             'Module Name'              => $this->getModuleName(),
             'Module Installed Version' => $this->getModuleInstalledVersion(),
         ];
-
         if ($extendedInfoRequest) {
             $extendedInfo = [
                 'Module Latest Version'     => $this->getModuleLatestVersion(),
@@ -54,24 +53,45 @@ trait BaseInfoMethod
             ];
             $info = array_merge($info, $extendedInfo);
         }
-
         return $info;
+    }
+
+    /**
+     * Gets file checksums
+     *
+     * @param array $fileList
+     * @param string $scope
+     *
+     * @return array
+     */
+    public function getChecksums($fileList, $scope)
+    {
+        return [
+            'Checksums' => $this->getFileChecksums($fileList, $scope)
+        ];
     }
 
     /**
      * Converts an array to string
      *
-     * @param array $arr
+     * @param array  $arr An associative array.
+     * @param string $ident Identation.
      * @return string
      */
-    public function convertArrayToString($arr)
+    public function convertArrayToString($arr, $ident = '')
     {
-        $result = '';
+        $result       = '';
+        $identPattern = '  ';
         foreach ($arr as $key => $value) {
-            if ($result !== '') {
+            if ('' !== $result) {
                 $result .= PHP_EOL;
             }
-            $result .= $key . ': ' . $value;
+
+            if (is_array($value)) {
+                $value = PHP_EOL . $this->convertArrayToString($value, $ident . $identPattern);
+            }
+
+            $result .= $ident . $key . ': ' . $value;
         }
         return $result;
     }
@@ -140,8 +160,7 @@ trait BaseInfoMethod
             $response = $psgw->executeHttpRequest($data);
             $responseBody = $response->getBody();
             if ($responseBody) {
-                // @codingStandardsIgnoreLine
-                $jsonObject = @json_decode($responseBody);
+                $jsonObject = json_decode($responseBody);
                 if (is_object($jsonObject) && property_exists($jsonObject, 'tag_name')) {
                     // @codingStandardsIgnoreLine
                     $result = $jsonObject->tag_name;
@@ -188,5 +207,64 @@ trait BaseInfoMethod
             $result = $response['Message'];
         }
         return $result;
+    }
+
+    /**
+     * Gets file checksums
+     *
+     * @param array $fileList
+     * @param string $scope
+     *
+     * @return array
+     */
+    private function getFileChecksums($fileList, $scope)
+    {
+        $result = false;
+        if (is_array($fileList)) {
+            switch ($scope) {
+                case 'module':
+                    $directory = $this->getModuleDirectory();
+                    break;
+                case 'platform':
+                    $directory = $this->getPlatformDirectory();
+                    break;
+                default:
+                    $directory = false;
+                    break;
+            }
+            if (!empty($directory)) {
+                $result = [];
+                foreach ($fileList as $key => $filename) {
+                    $file = $directory . '/' . $filename;
+                    // @codingStandardsIgnoreLine
+                    $result[$key] = is_file($file)
+                        ? sha1_file($file)
+                        : null;
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Gets module directory
+     *
+     * @return string
+     */
+    private function getModuleDirectory()
+    {
+        return $this->moduleReader->getModuleDir('', 'Paymentsense_Payments');
+    }
+
+    /**
+     * Gets platform directory
+     *
+     * @return string
+     */
+    private function getPlatformDirectory()
+    {
+        $objectManager = $this->getModuleHelper()->getObjectManager();
+        $directoryList = $objectManager->get('\Magento\Framework\App\Filesystem\DirectoryList');
+        return $directoryList->getPath('base');
     }
 }

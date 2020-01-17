@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2019 Paymentsense Ltd.
+ * Copyright (C) 2020 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2019 Paymentsense Ltd.
+ * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -70,6 +70,11 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
     protected $productMetadata;
 
     /**
+     * @var \Magento\Framework\Module\Dir\Reader
+     */
+    protected $moduleReader;
+
+    /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\App\Action\Context $actionContext
      * @param \Magento\Framework\Registry $registry
@@ -108,6 +113,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
         \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
         \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface,
+        \Magento\Framework\Module\Dir\Reader $moduleReader,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
@@ -135,6 +141,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         $this->_configHelper    = $this->getModuleHelper()->getMethodConfig($this->getCode());
         $this->_messageHelper   = $messageHelper;
         $this->productMetadata  = $productMetadataInterface;
+        $this->moduleReader     = $moduleReader;
     }
 
     /**

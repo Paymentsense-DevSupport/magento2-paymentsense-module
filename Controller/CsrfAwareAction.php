@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2019 Paymentsense Ltd.
+ * Copyright (C) 2020 Paymentsense Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,25 +13,26 @@
  * GNU General Public License for more details.
  *
  * @author      Paymentsense
- * @copyright   2019 Paymentsense Ltd.
+ * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 namespace Paymentsense\Payments\Controller;
 
 /**
- * Conditional inclusion of the proper CsrfAwareAction class based on the existence of the CsrfAwareActionInterface
- * interface and the PHP version
- *
- * Magento versions 2.3 and above use the CsrfAwareActionWithCsrfSupport.php while earlier Magento versions use the
- * CsrfAwareActionWithoutCsrfSupport.php file
+ * Abstract CsrfAwareAction class
  */
-if (interface_exists('\Magento\Framework\App\CsrfAwareActionInterface')
-    && version_compare(phpversion(), '7.1', '>=')
-) {
+abstract class CsrfAwareAction extends Action implements \Magento\Framework\App\CsrfAwareActionInterface
+{
     // @codingStandardsIgnoreLine
-    require_once __DIR__ . '/CsrfAwareActionWithCsrfSupport.php';
-} else {
+    public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
+    {
+        return true;
+    }
+
     // @codingStandardsIgnoreLine
-    require_once __DIR__ . '/CsrfAwareActionWithoutCsrfSupport.php';
+    public function createCsrfValidationException(\Magento\Framework\App\RequestInterface $request): ?\Magento\Framework\App\Request\InvalidRequestException
+    {
+        return null;
+    }
 }
