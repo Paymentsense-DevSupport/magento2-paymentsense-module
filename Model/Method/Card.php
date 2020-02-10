@@ -20,18 +20,14 @@
 namespace Paymentsense\Payments\Model\Method;
 
 use Paymentsense\Payments\Model\Psgw\Psgw;
-use Paymentsense\Payments\Model\Psgw\DataBuilder;
 use Paymentsense\Payments\Model\Psgw\TransactionType;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 use Paymentsense\Payments\Model\Psgw\HpfResponses;
 use Paymentsense\Payments\Model\Traits\BaseInfoMethod;
-use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Checkout\Model\Session;
 
 /**
  * Abstract Card class used by the Direct and MOTO payment methods
- *
- * @package Paymentsense\Payments\Model\Method
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.TooManyFields)
@@ -85,11 +81,13 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Paymentsense\Payments\Helper\Data $moduleHelper
+     * @param \Paymentsense\Payments\Helper\IsoCodes $isoCodes
      * @param \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper
      * @param \Magento\Framework\Module\ModuleListInterface $moduleList
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
-     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface,
+     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface
+     * @param \Magento\Framework\Module\Dir\Reader $moduleReader
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
      * @param array $data
@@ -108,6 +106,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         Session $checkoutSession,
         \Paymentsense\Payments\Helper\Data $moduleHelper,
+        \Paymentsense\Payments\Helper\IsoCodes $isoCodes,
         \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper,
         \Magento\Framework\Module\ModuleListInterface $moduleList,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
@@ -137,6 +136,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         $this->_storeManager    = $storeManager;
         $this->_checkoutSession = $checkoutSession;
         $this->_moduleHelper    = $moduleHelper;
+        $this->_isoCodes        = $isoCodes;
         $this->_orderSender     = $orderSender;
         $this->_configHelper    = $this->getModuleHelper()->getMethodConfig($this->getCode());
         $this->_messageHelper   = $messageHelper;
@@ -222,6 +222,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      *
      * @throws \Exception
      */
+    // @codingStandardsIgnoreLine
     public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
         $this->getLogger()->info('ACTION_AUTHORIZE has been triggered.');
@@ -231,7 +232,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         }
         $orderId = $order->getIncrementId();
         $this->getLogger()->info('Preparing PREAUTH transaction for order #' . $orderId);
-        return $this->processInitialTransaction($payment, $amount);
+        return $this->processInitialTransaction($payment);
     }
 
     /**
@@ -270,7 +271,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
             $this->getLogger()->info(
                 'Preparing ' . $config->getTransactionType() . ' transaction for order #' . $orderId
             );
-            return $this->processInitialTransaction($payment, $amount);
+            return $this->processInitialTransaction($payment);
         }
 
         if ($errorMessage !== '') {
@@ -285,14 +286,14 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * Builds the input data array for the initial transaction (Card Details Transaction)
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param $amount
      * @return array
      *
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function buildInitialTransactionData($payment, $amount)
+    protected function buildInitialTransactionData($payment)
     {
         $config         = $this->getConfigHelper();
+        $isoHelper      = $this->getIsoCodesHelper();
         $order          = $payment->getOrder();
         $orderId        = $order->getRealOrderId();
         $billingAddress = $order->getBillingAddress();
@@ -310,8 +311,8 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         return [
             'MerchantID'       => $config->getMerchantId(),
             'Password'         => $config->getPassword(),
-            'Amount'           => $amount * 100,
-            'CurrencyCode'     => DataBuilder::getCurrencyIsoCode($order->getOrderCurrencyCode()),
+            'Amount'           => $this->getPaymentTotalDue($order) * 100,
+            'CurrencyCode'     => $isoHelper->getCurrencyIsoCode($this->getPaymentCurrencyCode($order)),
             'TransactionType'  => $transactionType,
             'OrderID'          => $orderId,
             'OrderDescription' => $order->getRealOrderId() . ': New order',
@@ -328,7 +329,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
             'City'             => $billingAddress->getCity(),
             'State'            => $billingAddress->getRegionCode(),
             'PostCode'         => $billingAddress->getPostcode(),
-            'CountryCode'      => DataBuilder::getCountryIsoCode($billingAddress-> getCountryId()),
+            'CountryCode'      => $isoHelper->getCountryIsoCode($billingAddress-> getCountryId()),
             'EmailAddress'     => $order->getCustomerEmail(),
             'PhoneNumber'      => $billingAddress->getTelephone(),
             'IPAddress'        => $order->getRemoteIp(),
@@ -339,7 +340,6 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * Processes initial transaction (Card Details Transaction)
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param $amount
      * @return $this
      *
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -347,30 +347,40 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     // phpcs:ignore Generic.Metrics.CyclomaticComplexity
-    protected function processInitialTransaction($payment, $amount)
+    protected function processInitialTransaction($payment)
     {
         $config            = $this->getConfigHelper();
         $order             = $payment->getOrder();
         $orderId           = $order->getRealOrderId();
         $transactionType   = $config->getTransactionType();
-        $trxData           = $this->buildInitialTransactionData($payment, $amount);
+        $request           = $this->buildInitialTransactionData($payment);
         $objectManager     = $this->getModuleHelper()->getObjectManager();
         $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
         $psgw              = new Psgw($zendClientFactory);
-
         try {
             $errorMessage = null;
-            $response     = $psgw->performCardDetailsTxn($trxData);
+            $response     = $psgw->performCardDetailsTxn($request);
             $status       = $response['StatusCode'];
             if ($status !== false) {
                 $payment
+                    ->setMethod($this->getCode())
                     ->setTransactionId($response['CrossReference'])
                     ->setIsTransactionPending($status === TransactionResultCode::INCOMPLETE)
-                    ->setIsTransactionClosed(false)
-                    ->setTransactionAdditionalInfo(Transaction::RAW_DETAILS, $response);
+                    ->setIsTransactionClosed(false);
+                $this->getModuleHelper()->setPaymentTransactionAdditionalInfo(
+                    $payment,
+                    array_merge(
+                        [
+                            'Amount'       => $request['Amount'],
+                            'CurrencyCode' => $request['CurrencyCode']
+                        ],
+                        $response
+                    )
+                );
                 switch ($status) {
                     case TransactionResultCode::SUCCESS:
                         $isTransactionFailed = false;
+                        $this->updatePayment($order, $response, $request, false);
                         break;
                     case TransactionResultCode::INCOMPLETE:
                         if ($this->is3dsSupported()) {
@@ -441,7 +451,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         $status  = null;
         $message = "Invalid response received from the ACS.";
         if (array_key_exists('PaRes', $postData) && array_key_exists('MD', $postData)) {
-            $trxData = [
+            $request = [
                 'MerchantID'     => $config->getMerchantId(),
                 'Password'       => $config->getPassword(),
                 'CrossReference' => $postData['MD'],
@@ -454,7 +464,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
 
             try {
                 $this->getLogger()->info('Preparing 3-D Secure authentication for order #' . $orderId);
-                $response = $psgw->perform3dsAuthTxn($trxData);
+                $response = $psgw->perform3dsAuthTxn($request);
                 $status   = $response['StatusCode'];
 
                 $this->getLogger()->info(
@@ -467,20 +477,22 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                 $payment
                     ->setTransactionId($response['CrossReference'])
                     ->setIsTransactionPending(false)
-                    ->setIsTransactionClosed($isTransactionFailed)
-                    ->setTransactionAdditionalInfo(Transaction::RAW_DETAILS, $response);
+                    ->setIsTransactionClosed($isTransactionFailed);
+
+                $this->getModuleHelper()->setPaymentTransactionAdditionalInfo($payment, $response);
 
                 $message = $isTransactionFailed
                     ? '3-D Secure Authentication failed. Payment Gateway Message: ' . $response['Message']
                     : '';
 
                 $this->getModuleHelper()->setOrderState($order, $status, $message);
-
                 $response['OrderID']         = $orderId;
-                $response['Amount']          = $order->getTotalDue() * 100;
+                $response['Amount']          = $this->getPaymentTotalDue($order) * 100;
                 $response['TransactionType'] = $config->getTransactionType();
 
-                $this->updatePayment($order, $response);
+                $initialTransaction = $this->getModuleHelper()->getPaymentTransaction($postData['MD'], 'txn_id');
+                $request = $this->getModuleHelper()->getPaymentTransactionAdditionalInfo($initialTransaction);
+                $this->updatePayment($order, $response, $request, true);
                 if (! $isTransactionFailed) {
                     $this->sendNewOrderEmail($order);
                 }

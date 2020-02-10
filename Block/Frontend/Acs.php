@@ -77,20 +77,18 @@ class Acs extends \Magento\Framework\View\Element\Template
     /**
      * Gets the data for the ACS request form
      *
-     * @return string JSON-encoded array
+     * @return array
      */
     public function getAcsData()
     {
-        return json_encode(
-            [
-                'loader'          => $this->getViewFileUrl('images/loader-2.gif'),
-                'errorText'       => $this->getCommonErrorText(),
-                'continueText'    => $this->getContinueText(),
-                'cancelText'      => $this->getCancelOrderText(),
-                'dataProviderUrl' => $this->getUrl('paymentsense/direct/dataprovider'),
-                'cancelActionUrl' => $this->getUrl('paymentsense/direct', ['action' => Action::THREEDSCANCEL]),
-                'errorActionUrl'  => $this->getUrl('paymentsense/direct', ['action' => Action::THREEDSERROR])
-            ]
-        );
+        return [
+            'loader'          => $this->getViewFileUrl('images/loader-2.gif'),
+            'errorText'       => $this->getCommonErrorText(),
+            'continueText'    => $this->getContinueText(),
+            'cancelText'      => $this->getCancelOrderText(),
+            'dataProviderUrl' => $this->getUrl('paymentsense/direct/dataprovider'),
+            'cancelActionUrl' => $this->getUrl('paymentsense/direct', ['action' => Action::THREEDSCANCEL]),
+            'errorActionUrl'  => $this->getUrl('paymentsense/direct', ['action' => Action::THREEDSERROR])
+        ];
     }
 }

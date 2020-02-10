@@ -24,8 +24,6 @@ use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 
 /**
  * Base method with module information
- *
- * @package Paymentsense\Payments\Model
  */
 trait BaseInfoMethod
 {

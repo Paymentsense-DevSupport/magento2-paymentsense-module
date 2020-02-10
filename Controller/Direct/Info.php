@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Controller\Direct;
 
 /**
  * Handles the module information request
- *
- * @package Paymentsense\Payments\Controller\Direct
  */
 class Info extends \Paymentsense\Payments\Controller\InfoAction
 {

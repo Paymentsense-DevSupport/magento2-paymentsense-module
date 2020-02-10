@@ -2,7 +2,7 @@
     "name": "paymentsense/magento2-module",
     "description": "Paymentsense Module for Magento 2 Open Source (Community Edition)",
     "type": "magento2-module",
-    "version": "2.3.0",
+    "version": "2.3.1",
     "license": [
         "GPL-3.0"
     ],
@@ -36,5 +36,9 @@
         "psr-4": {
             "Paymentsense\\Payments\\": ""
         }
+    },
+    "require": {
+        "php": ">=7.1",
+        "ext-json": "*"
     }
 }

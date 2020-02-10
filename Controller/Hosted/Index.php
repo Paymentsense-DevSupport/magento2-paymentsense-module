@@ -23,8 +23,6 @@ use Paymentsense\Payments\Model\Psgw\TransactionStatus;
 
 /**
  * Handles the response from the payment gateway
- *
- * @package Paymentsense\Payments\Controller\Hosted
  */
 class Index extends \Paymentsense\Payments\Controller\CheckoutAction
 {
@@ -147,23 +145,19 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
             );
             return;
         }
-
         $data = $this->getPostData();
-
         $trxStatusAndMessage = $this->_method->getTrxStatusAndMessage($this->getRequestType(), $data);
-
         if ($trxStatusAndMessage['TrxStatus'] !== TransactionStatus::INVALID) {
-            $order = $this->_method->getOrder($data);
+            $gatewayOrderId = isset($data['OrderID']) ? $data['OrderID'] : null;
+            $order = $this->_method->getOrder($gatewayOrderId);
             if ($order) {
                 $this->_method->getModuleHelper()->setOrderState($order, $trxStatusAndMessage['TrxStatus']);
-                $this->_method->updatePayment($order, $data);
-
+                $this->_method->updatePayment($order, $data, [], true);
                 if ($trxStatusAndMessage['TrxStatus'] === TransactionStatus::SUCCESS) {
                     $this->_method->sendNewOrderEmail($order);
                 }
             }
         }
-
         $this->processActions($trxStatusAndMessage);
         $this->_method->getLogger()->info(
             'POST Callback request from the Hosted Payment Form has been processed.'
@@ -185,14 +179,17 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
             $this->setError(self::MSG_NON_POST_HTTP_METHOD);
         } else {
             $data = $this->getPostData();
-
             $trxStatusAndMessage = $this->_method->getTrxStatusAndMessage($this->getRequestType(), $data);
-
             if ($trxStatusAndMessage['TrxStatus'] !== TransactionStatus::INVALID) {
-                $order = $this->_method->getOrder($data);
+                $gatewayOrderId = isset($data['OrderID']) ? $data['OrderID'] : null;
+                $order = $this->_method->getOrder($gatewayOrderId);
                 if ($order) {
-                    $this->_method->getModuleHelper()->setOrderState($order, $trxStatusAndMessage['TrxStatus']);
-                    $this->_method->updatePayment($order, $data);
+                    $this->_method->getModuleHelper()->setOrderState(
+                        $order,
+                        $data['StatusCode'],
+                        $trxStatusAndMessage['Message']
+                    );
+                    $this->_method->updatePayment($order, $data, [], true);
                     $this->setSuccess();
                     if ($trxStatusAndMessage['TrxStatus'] === TransactionStatus::SUCCESS) {
                         $this->_method->sendNewOrderEmail($order);
@@ -203,7 +200,6 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
             } else {
                 $this->setError(self::MSG_HASH_DIGEST_ERROR);
             }
-
             $this->outputResponse();
             $this->_method->getLogger()->info(
                 'SERVER Callback request from the Hosted Payment Form has been processed.'
@@ -221,19 +217,17 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
         $this->_method->getLogger()->info(
             'SERVER Customer Redirect from the Hosted Payment Form has been received.'
         );
-
         $data = $this->getQueryData();
-
         if ($this->_method->isHashDigestValid($this->getRequestType(), $data)) {
-            $trxStatusAndMessage = $this->_method->loadTrxStatusAndMessage($data);
+            $gatewayOrderId = isset($data['OrderID']) ? $data['OrderID'] : null;
+            $trxStatusAndMessage = $this->_method->loadTrxStatusAndMessage($gatewayOrderId);
         } else {
             $this->_method->getLogger()->warning('Callback request with invalid hash digest has been received.');
             $trxStatusAndMessage = [
-                'TrxStatus' => TransactionStatus::INVALID,
-                'Message'   => ''
+                'TrxStatus' => TransactionStatus::FAILED,
+                'Message'   => self::MSG_HASH_DIGEST_ERROR
             ];
         }
-
         $this->processActions($trxStatusAndMessage);
         $this->_method->getLogger()->info(
             'SERVER Customer Redirect from the Hosted Payment Form has been processed.'

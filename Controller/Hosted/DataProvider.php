@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Controller\Hosted;
 
 /**
  * Provides data for the form redirecting to the Hosted Payment Form
- *
- * @package Paymentsense\Payments\Controller\Hosted
  */
 class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
 {

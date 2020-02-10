@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Model\Method;
 
 /**
  * MOTO payment method model
- *
- * @package Paymentsense\Payments\Model\Method
  */
 class Moto extends Card
 {

@@ -24,8 +24,6 @@ use Magento\Backend\Model\Auth\Session;
 
 /**
  * Renderer for the Hosted method in the admin panel
- *
- * @package Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset
  */
 class HostedPayment extends Base\Payment
 {

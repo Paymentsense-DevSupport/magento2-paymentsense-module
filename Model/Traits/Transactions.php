@@ -21,7 +21,6 @@ namespace Paymentsense\Payments\Model\Traits;
 
 use DateTime;
 use Paymentsense\Payments\Model\Psgw\Psgw;
-use Paymentsense\Payments\Model\Psgw\DataBuilder;
 use Paymentsense\Payments\Model\Psgw\TransactionType;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 use Paymentsense\Payments\Model\Psgw\HpfResponses;
@@ -54,6 +53,10 @@ trait Transactions
      * @var \Paymentsense\Payments\Helper\Data
      */
     protected $_moduleHelper;
+    /**
+     * @var \Paymentsense\Payments\Helper\IsoCodes
+     */
+    protected $_isoCodes;
     /**
      * @var \Magento\Framework\App\Action\Context
      */
@@ -93,6 +96,16 @@ trait Transactions
     public function getModuleHelper()
     {
         return $this->_moduleHelper;
+    }
+
+    /**
+     * Gets an instance of the ISO Codes Helper Object
+     *
+     * @return \Paymentsense\Payments\Helper\IsoCodes
+     */
+    public function getIsoCodesHelper()
+    {
+        return $this->_isoCodes;
     }
 
     /**
@@ -159,15 +172,15 @@ trait Transactions
      * Performs a Reference Transaction (COLLECTION, REFUND, VOID)
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param array $trxData Transaction data
+     * @param array $request Transaction request data
      * @return array
      */
-    protected function processReferenceTransaction(\Magento\Payment\Model\InfoInterface $payment, $trxData)
+    protected function processReferenceTransaction(\Magento\Payment\Model\InfoInterface $payment, $request)
     {
         $objectManager     = $this->getModuleHelper()->getObjectManager();
         $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
         $psgw              = new Psgw($zendClientFactory);
-        $response          = $psgw->performCrossRefTxn($trxData);
+        $response          = $psgw->performCrossRefTxn($request);
 
         $this->getLogger()->info(
             'Reference transaction ' . $response['CrossReference'] .
@@ -177,13 +190,20 @@ trait Transactions
         if ($response['StatusCode'] !== false) {
             $payment
                 ->setTransactionId($response['CrossReference'])
-                ->setParentTransactionId($trxData['CrossReference'])
+                ->setParentTransactionId($request['CrossReference'])
                 ->setShouldCloseParentTransaction(true)
                 ->setIsTransactionPending(false)
-                ->setIsTransactionClosed(true)
-                ->resetTransactionAdditionalInfo();
-
-            $this->getModuleHelper()->setPaymentTransactionAdditionalInfo($payment, $response);
+                ->setIsTransactionClosed(true);
+            $this->getModuleHelper()->setPaymentTransactionAdditionalInfo(
+                $payment,
+                array_merge(
+                    [
+                        'Amount'       => $request['Amount'],
+                        'CurrencyCode' => $request['CurrencyCode']
+                    ],
+                    $response
+                )
+            );
             $payment->save();
         }
         return $response;
@@ -205,18 +225,23 @@ trait Transactions
         $order   = $payment->getOrder();
         $orderId = $order->getRealOrderId();
         $reason  = 'Collection';
-        $xmlData = [
+
+        if (!$this->isTransactionInBaseCurrency($authTransaction)) {
+            $amount = $this->getModuleHelper()->calculateOrderAmountDue($order, $amount);
+        }
+
+        $request = [
             'MerchantID'       => $config->getMerchantId(),
             'Password'         => $config->getPassword(),
             'Amount'           => $amount * 100,
-            'CurrencyCode'     => DataBuilder::getCurrencyIsoCode($order->getOrderCurrencyCode()),
+            'CurrencyCode'     => $this->getIsoCodesHelper()->getCurrencyIsoCode($this->getPaymentCurrencyCode($order)),
             'TransactionType'  => TransactionType::COLLECTION,
             'CrossReference'   => $authTransaction->getTxnId(),
             'OrderID'          => $orderId,
             'OrderDescription' => $orderId . ': ' . $reason,
         ];
 
-        $response = $this->processReferenceTransaction($payment, $xmlData);
+        $response = $this->processReferenceTransaction($payment, $request);
 
         if ($response['StatusCode'] === TransactionResultCode::SUCCESS) {
             $this->getMessageManager()->addSuccessMessage($response['Message']);
@@ -249,18 +274,23 @@ trait Transactions
         $order   = $payment->getOrder();
         $orderId = $order->getRealOrderId();
         $reason  = 'Refund';
-        $xmlData = [
+
+        if (!$this->isTransactionInBaseCurrency($captureTransaction)) {
+            $amount = $this->getModuleHelper()->calculateOrderAmountPaid($order, $amount);
+        }
+
+        $request = [
             'MerchantID'       => $config->getMerchantId(),
             'Password'         => $config->getPassword(),
             'Amount'           => $amount * 100,
-            'CurrencyCode'     => DataBuilder::getCurrencyIsoCode($order->getOrderCurrencyCode()),
+            'CurrencyCode'     => $this->getIsoCodesHelper()->getCurrencyIsoCode($this->getPaymentCurrencyCode($order)),
             'TransactionType'  => TransactionType::REFUND,
             'CrossReference'   => $captureTransaction->getTxnId(),
             'OrderID'          => $orderId,
             'OrderDescription' => $orderId . ': ' . $reason,
         ];
 
-        $response = $this->processReferenceTransaction($payment, $xmlData);
+        $response = $this->processReferenceTransaction($payment, $request);
 
         if ($response['StatusCode'] === TransactionResultCode::SUCCESS) {
             $this->getMessageManager()->addSuccessMessage($response['Message']);
@@ -292,7 +322,7 @@ trait Transactions
         $order   = $payment->getOrder();
         $orderId = $order->getRealOrderId();
         $reason  = 'Void';
-        $xmlData = [
+        $request = [
             'MerchantID'       => $config->getMerchantId(),
             'Password'         => $config->getPassword(),
             'Amount'           => '',
@@ -303,7 +333,7 @@ trait Transactions
             'OrderDescription' => $orderId . ': ' . $reason,
         ];
 
-        $response = $this->processReferenceTransaction($payment, $xmlData);
+        $response = $this->processReferenceTransaction($payment, $request);
 
         if ($response['StatusCode'] === TransactionResultCode::SUCCESS) {
             $this->getMessageManager()->addSuccessMessage($response['Message']);
@@ -334,11 +364,10 @@ trait Transactions
         $errorMessage = '';
         $order        = $payment->getOrder();
         $orderId      = $order->getIncrementId();
-
-        $this->getLogger()->info('Preparing REFUND transaction for order #' . $orderId);
-
+        $this->getLogger()->info(
+            sprintf('Preparing REFUND transaction for order #%s', $orderId)
+        );
         $captureTransaction = $this->getModuleHelper()->lookUpCaptureTransaction($payment);
-
         if (isset($captureTransaction)) {
             try {
                 $this->performRefund($payment, $amount, $captureTransaction);
@@ -372,11 +401,11 @@ trait Transactions
         $errorMessage = '';
         $order        = $payment->getOrder();
         $orderId      = $order->getIncrementId();
-
-        $this->getLogger()->info('Preparing COLLECTION transaction for order #' . $orderId);
+        $this->getLogger()->info(
+            sprintf('Preparing COLLECTION transaction for order #%s', $orderId)
+        );
 
         $authTransaction = $this->getModuleHelper()->lookUpAuthorisationTransaction($payment);
-
         if (isset($authTransaction)) {
             try {
                 $this->performCollection($payment, $amount, $authTransaction);
@@ -410,10 +439,11 @@ trait Transactions
         $order        = $payment->getOrder();
         $orderId      = $order->getIncrementId();
 
-        $this->getLogger()->info('Preparing VOID transaction for order #' . $orderId);
+        $this->getLogger()->info(
+            sprintf('Preparing VOID transaction for order #%s', $orderId)
+        );
 
         $authTransaction = $this->getModuleHelper()->lookUpAuthorisationTransaction($payment);
-
         if (isset($authTransaction)) {
             try {
                 $this->performVoid($payment, $authTransaction);
@@ -450,12 +480,15 @@ trait Transactions
      * Updates payment info and registers Card Details Transactions
      *
      * @param \Magento\Sales\Model\Order $order
-     * @param array $response An array containing transaction response data from the gateway
+     * @param array $response Transaction response data received from the gateway
+     * @param array $request Transaction request data sent to the gateway
+     * @param bool $registerNotification Determines whether to register a notification
      *
      * @throws \Exception
      */
-    public function updatePayment($order, $response)
+    public function updatePayment($order, $response, $request, $registerNotification)
     {
+        $config            = $this->getConfigHelper();
         $transactionID     = $response['CrossReference'];
         $payment           = $order->getPayment();
         $lastTransactionId = $payment->getLastTransId();
@@ -465,16 +498,57 @@ trait Transactions
         $payment->setParentTransactionId($lastTransactionId);
         $payment->setShouldCloseParentTransaction(true);
         $payment->setIsTransactionPending($response['StatusCode'] !== TransactionResultCode::SUCCESS);
-        $payment->setIsTransactionClosed($response['TransactionType'] === TransactionType::SALE);
-        $this->getModuleHelper()->setPaymentTransactionAdditionalInfo($payment, $response);
+        $payment->setIsTransactionClosed($config->getTransactionType() === TransactionType::SALE);
         if ($response['StatusCode'] === TransactionResultCode::SUCCESS) {
-            if ($response['TransactionType'] === TransactionType::SALE) {
-                $payment->registerCaptureNotification($response['Amount'] / 100);
-            } else {
-                $payment->registerAuthorizationNotification($response['Amount'] / 100);
-            }
+            $amount = isset($response['Amount']) ? $response['Amount'] : $request['Amount'];
+            $currencyCode = isset($response['CurrencyCode']) ? $response['CurrencyCode'] : $request['CurrencyCode'];
+            $this->getModuleHelper()->setPaymentTransactionAdditionalInfo(
+                $payment,
+                array_merge(
+                    [
+                        'Amount'       => $amount,
+                        'CurrencyCode' => $currencyCode
+                    ],
+                    $response
+                )
+            );
+            $this->registerTransaction($payment, $amount / 100, $registerNotification);
         }
         $order->save();
+    }
+
+    /**
+     * Registers a payment transaction
+     *
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param float $amount Transaction amount
+     * @param bool $registerNotification Determines whether to register a notification
+     */
+    public function registerTransaction($payment, $amount, $registerNotification)
+    {
+        $config = $this->getConfigHelper();
+        $order = $payment->getOrder();
+        $transactionID = $payment->getLastTransId();
+        $transactionType = $config->getTransactionType();
+        $commentMessage = sprintf(
+            'A %s transaction in the %s currency of the amount of %.2f %s is performed.',
+            $transactionType,
+            $config->getPaymentCurrency(),
+            $amount,
+            $this->getPaymentCurrencyCode($order)
+        );
+        $this->getLogger()->info($commentMessage);
+        $payment->addTransactionCommentsToOrder($transactionID, $commentMessage);
+        if (!$config->isBaseCurrency()) {
+            $amount = $this->getModuleHelper()->calculateBaseAmount($order, $amount);
+        }
+        if ($registerNotification) {
+            if ($transactionType === TransactionType::SALE) {
+                $payment->registerCaptureNotification($amount);
+            } else {
+                $payment->registerAuthorizationNotification($amount);
+            }
+        }
     }
 
     /**
@@ -488,13 +562,13 @@ trait Transactions
         $objectManager     = $this->getModuleHelper()->getObjectManager();
         $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
         $psgw              = new Psgw($zendClientFactory);
-        $trxData           = [
+        $request           = [
             'MerchantID' => $config->getMerchantId(),
             'Password'   => $config->getPassword(),
         ];
 
         $psgw->setTrxMaxAttempts(1);
-        $result = $psgw->performGetGatewayEntryPointsTxn($trxData);
+        $result = $psgw->performGetGatewayEntryPointsTxn($request);
 
         foreach ($result['ResponseHeaders'] as $url => $header) {
             if (array_key_exists('Date', $header)) {
@@ -508,7 +582,7 @@ trait Transactions
     /**
      * Checks whether the plugin can connect to the gateway by performing GetGatewayEntryPoints transaction
      *
-     * @return boolean
+     * @return bool
      */
     public function canConnect()
     {
@@ -524,6 +598,24 @@ trait Transactions
     {
         $port4430IsNotOpen = (bool) $this->getConfigHelper()->getPort4430NotOpen();
         $this->_canCapture = $this->_canRefund = $this->_canVoid = ! $port4430IsNotOpen;
+    }
+
+    /**
+     * Determines whether the payment transaction is in the base currency
+     *
+     * @param \Magento\Sales\Model\Order\Payment\Transaction $transaction Payment transaction
+     * @return bool
+     */
+    public function isTransactionInBaseCurrency($transaction)
+    {
+        $trxCurrencyCode = $this->getModuleHelper()->getPaymentTransactionAdditionalInfo(
+            $transaction,
+            'CurrencyCode'
+        );
+        $baseCurrencyCode = $this->getIsoCodesHelper()->getCurrencyIsoCode(
+            $transaction->getOrder()->getBaseCurrencyCode()
+        );
+        return $trxCurrencyCode == $baseCurrencyCode;
     }
 
     /**
@@ -620,7 +712,7 @@ trait Transactions
 
         foreach ($fields as $key => $value) {
             $data .= '&' . $key . '=' . $value;
-        };
+        }
 
         $gatewayHashMethod = ($this instanceof \Paymentsense\Payments\Model\Method\Hosted)
             ? $config->getHashMethod()
@@ -658,16 +750,18 @@ trait Transactions
      */
     public function buildPaymentFields($order)
     {
-        $billingAddress = $order->getBillingAddress();
+        $moduleHelper = $this->getModuleHelper();
         $config = $this->getConfigHelper();
+        $isoHelper = $this->getIsoCodesHelper();
         $orderId = $order->getRealOrderId();
+        $billingAddress = $order->getBillingAddress();
         return [
-            'Amount'                    => $order->getTotalDue() * 100,
-            'CurrencyCode'              => DataBuilder::getCurrencyIsoCode($order->getOrderCurrencyCode()),
+            'Amount'                    => $this->getPaymentTotalDue($order) * 100,
+            'CurrencyCode'              => $isoHelper->getCurrencyIsoCode($this->getPaymentCurrencyCode($order)),
             'OrderID'                   => $orderId,
             'TransactionType'           => $config->getTransactionType(),
             'TransactionDateTime'       => date('Y-m-d H:i:s P'),
-            'CallbackURL'               => $this->getModuleHelper()->getHpfCallbackUrl(),
+            'CallbackURL'               => $moduleHelper->getHpfCallbackUrl(),
             'OrderDescription'          => $order->getRealOrderId() . ': New order',
             'CustomerName'              => $billingAddress->getFirstname() . ' ' . $billingAddress->getLastname(),
             'Address1'                  => $billingAddress->getStreetLine(1),
@@ -677,20 +771,20 @@ trait Transactions
             'City'                      => $billingAddress->getCity(),
             'State'                     => $billingAddress->getRegionCode(),
             'PostCode'                  => $billingAddress->getPostcode(),
-            'CountryCode'               => DataBuilder::getCountryIsoCode($billingAddress-> getCountryId()),
+            'CountryCode'               => $isoHelper->getCountryIsoCode($billingAddress-> getCountryId()),
             'EmailAddress'              => $order->getCustomerEmail(),
             'PhoneNumber'               => $billingAddress->getTelephone(),
-            'EmailAddressEditable'      => DataBuilder::getBool($config->getEmailAddressEditable()),
-            'PhoneNumberEditable'       => DataBuilder::getBool($config->getPhoneNumberEditable()),
+            'EmailAddressEditable'      => $moduleHelper->getBool($config->getEmailAddressEditable()),
+            'PhoneNumberEditable'       => $moduleHelper->getBool($config->getPhoneNumberEditable()),
             'CV2Mandatory'              => 'true',
-            'Address1Mandatory'         => DataBuilder::getBool($config->getAddress1Mandatory()),
-            'CityMandatory'             => DataBuilder::getBool($config->getCityMandatory()),
-            'PostCodeMandatory'         => DataBuilder::getBool($config->getPostcodeMandatory()),
-            'StateMandatory'            => DataBuilder::getBool($config->getStateMandatory()),
-            'CountryMandatory'          => DataBuilder::getBool($config->getCountryMandatory()),
+            'Address1Mandatory'         => $moduleHelper->getBool($config->getAddress1Mandatory()),
+            'CityMandatory'             => $moduleHelper->getBool($config->getCityMandatory()),
+            'PostCodeMandatory'         => $moduleHelper->getBool($config->getPostcodeMandatory()),
+            'StateMandatory'            => $moduleHelper->getBool($config->getStateMandatory()),
+            'CountryMandatory'          => $moduleHelper->getBool($config->getCountryMandatory()),
             'ResultDeliveryMethod'      => $config->getResultDeliveryMethod(),
             'ServerResultURL'           => ('SERVER' === $config->getResultDeliveryMethod())
-                ? $this->getModuleHelper()->getHpfCallbackUrl()
+                ? $moduleHelper->getHpfCallbackUrl()
                 : '',
             'PaymentFormDisplaysResult' => 'false'
         ];
@@ -706,7 +800,7 @@ trait Transactions
         $config = $this->getConfigHelper();
         return [
             'Amount'                    => 100,
-            'CurrencyCode'              => DataBuilder::getCurrencyIsoCode(null),
+            'CurrencyCode'              => $this->getIsoCodesHelper()->getCurrencyIsoCode(null),
             'OrderID'                   => 'TEST-' . rand(1000000, 9999999),
             'TransactionType'           => $config->getTransactionType(),
             'TransactionDateTime'       => date('Y-m-d H:i:s P'),
@@ -890,5 +984,29 @@ trait Transactions
     public function getSystemTimeThreshold()
     {
         return $this->_systemTimeThreshold;
+    }
+
+    /**
+     * Gets Payment Currency Code
+     *
+     * @param  \Magento\Sales\Model\Order $order
+     * @return string|null
+     */
+    public function getPaymentCurrencyCode($order)
+    {
+        $config = $this->getConfigHelper();
+        return $config->isBaseCurrency() ? $order->getBaseCurrencyCode() : $order->getOrderCurrencyCode();
+    }
+
+    /**
+     * Gets Payment Total Due
+     *
+     * @param  \Magento\Sales\Model\Order $order
+     * @return float|null
+     */
+    public function getPaymentTotalDue($order)
+    {
+        $config = $this->getConfigHelper();
+        return $config->isBaseCurrency() ? $order->getBaseTotalDue() : $order->getTotalDue();
     }
 }

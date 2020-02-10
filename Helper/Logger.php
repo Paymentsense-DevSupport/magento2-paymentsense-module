@@ -22,9 +22,8 @@ namespace Paymentsense\Payments\Helper;
 /**
  * Logger
  *
- * Log files reside in the /var/log/paymentsense directory. Failback is the system log.
- *
- * @package Paymentsense\Payments\Helper
+ * Uses the PaymentsenseLogger class writing to the log files in the /var/log/paymentsense directory.
+ * Failback to the Monolog Logger class writing to the system log.
  */
 class Logger extends \Magento\Payment\Model\Method\Logger
 {
@@ -37,6 +36,7 @@ class Logger extends \Magento\Payment\Model\Method\Logger
      * @param mixed $method
      *
      * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Exception
      */
     public function __construct($method)
     {

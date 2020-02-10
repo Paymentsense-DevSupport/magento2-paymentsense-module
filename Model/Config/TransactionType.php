@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Model\Config;
 
 /**
  * Transaction Types Model Source
- *
- * @package Paymentsense\Payments\Model\Config
  */
 class TransactionType implements \Magento\Framework\Option\ArrayInterface
 {

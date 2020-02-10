@@ -23,8 +23,6 @@ use Magento\Backend\Model\Session;
 
 /**
  * Handles the payment method status request
- *
- * @package Paymentsense\Payments\Controller\Moto
  */
 class Status extends \Paymentsense\Payments\Controller\StatusAction
 {

@@ -24,8 +24,6 @@ use Magento\Backend\Model\Auth\Session;
 
 /**
  * Renderer for the MOTO method in the admin panel
- *
- * @package Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset
  */
 class MotoPayment extends Base\Payment
 {

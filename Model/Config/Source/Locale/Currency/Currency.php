@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Model\Config\Source\Locale\Currency;
 
 /**
  * Currency source model
- *
- * @package Paymentsense\Payments\Model\Config\Source\Locale\Currency
  */
 class Currency extends \Magento\Config\Model\Config\Source\Locale\Currency
 {

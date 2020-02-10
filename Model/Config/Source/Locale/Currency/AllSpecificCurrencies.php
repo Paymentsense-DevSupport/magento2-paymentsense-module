@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Model\Config\Source\Locale\Currency;
 
 /**
  * Specific Currencies source model
- *
- * @package Paymentsense\Payments\Model\Config\Source\Locale\Currency
  */
 class AllSpecificCurrencies implements \Magento\Framework\Option\ArrayInterface
 {

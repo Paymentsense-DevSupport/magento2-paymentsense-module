@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Model\Config;
 
 /**
  * Result Delivery Methods Model Source
- *
- * @package Paymentsense\Payments\Model\Config
  */
 class ResultDeliveryMethod implements \Magento\Framework\Option\ArrayInterface
 {

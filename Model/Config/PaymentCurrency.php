@@ -17,23 +17,29 @@
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
-namespace Paymentsense\Payments\Model\Psgw;
+namespace Paymentsense\Payments\Model\Config;
 
 /**
- * Data Builder used for building data for the transaction requests.
- *
- * Used for ISO codes and boolean values
+ * Payment Currency Model Source
  */
-class DataBuilder extends IsoCodes
+class PaymentCurrency implements \Magento\Framework\Option\ArrayInterface
 {
     /**
-     * Converts boolean to string
+     * Builds the options for the select control in the admin panel
      *
-     * @param boolean $value
-     * @return string
+     * @return array
      */
-    public static function getBool($value)
+    public function toOptionArray()
     {
-        return $value ? 'true' : 'false';
+        return [
+            [
+                'value' => 'DISPLAY',
+                'label' => __('Display Currency')
+            ],
+            [
+                'value' => 'BASE',
+                'label' => __('Base Currency')
+            ]
+        ];
     }
 }

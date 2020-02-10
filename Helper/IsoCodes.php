@@ -17,12 +17,13 @@
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
-namespace Paymentsense\Payments\Model\Psgw;
+namespace Paymentsense\Payments\Helper;
 
 /**
- * ISO Codes for countries and currencies
+ * ISO Codes helper
+ * Defines the ISO 3166-1 and 4217 codes for countries and currencies
  */
-class IsoCodes
+class IsoCodes extends \Magento\Framework\App\Helper\AbstractHelper
 {
     /**
      * Gets country ISO 3166-1 code
@@ -32,7 +33,7 @@ class IsoCodes
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public static function getCountryIsoCode($countryCode)
+    public function getCountryIsoCode($countryCode)
     {
         $result   = '';
         $isoCodes = [
@@ -277,7 +278,7 @@ class IsoCodes
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public static function getCurrencyIsoCode($currencyCode, $defaultCode = '826')
+    public function getCurrencyIsoCode($currencyCode, $defaultCode = '826')
     {
         $result   = $defaultCode;
         $isoCodes = [

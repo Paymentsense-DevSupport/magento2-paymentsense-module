@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Controller\Hosted;
 
 /**
  * Handles the file checksums request
- *
- * @package Paymentsense\Payments\Controller\Direct
  */
 class Checksums extends \Paymentsense\Payments\Controller\ChecksumsAction
 {

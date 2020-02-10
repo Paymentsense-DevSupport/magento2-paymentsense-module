@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Model\Config;
 
 /**
  * Hash Methods Model Source
- *
- * @package Paymentsense\Payments\Model\Config
  */
 class HashMethods implements \Magento\Framework\Option\ArrayInterface
 {

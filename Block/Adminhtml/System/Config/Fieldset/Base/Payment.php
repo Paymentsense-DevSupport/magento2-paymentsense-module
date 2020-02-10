@@ -23,8 +23,6 @@ use Magento\Backend\Model\Auth\Session;
 
 /**
  * Base renderer for all payment methods in the admin panel
- *
- * @package Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset\Base
  */
 abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
 {
@@ -77,8 +75,6 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
      *
      * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
      * @return string
-     *
-     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function _getHeaderTitleHtml($element)
     {
@@ -152,6 +148,8 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
      *
      * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
      * @return string
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     // @codingStandardsIgnoreLine
     protected function _getExtraJs($element)

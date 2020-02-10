@@ -22,7 +22,7 @@ namespace Paymentsense\Payments\Helper;
 /**
  * Paymentsense Logger
  *
- * @package Paymentsense\Payments\Helper
+ * Log events of the Paymentsense module. Log files reside in the var/log/paymentsense directory.
  */
 class PaymentsenseLogger extends \Monolog\Logger
 {
@@ -45,8 +45,6 @@ class PaymentsenseLogger extends \Monolog\Logger
 
     /**
      * Gets Log level
-     *
-     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getLogLevel()
     {
@@ -60,9 +58,7 @@ class PaymentsenseLogger extends \Monolog\Logger
      *
      * @param  string  $message The log message
      * @param  array   $context The log context
-     * @return boolean Whether the record has been processed
-     *
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return bool Whether the record has been processed
      */
     public function error($message, array $context = [])
     {
@@ -80,9 +76,7 @@ class PaymentsenseLogger extends \Monolog\Logger
      *
      * @param  string  $message The log message
      * @param  array   $context The log context
-     * @return boolean Whether the record has been processed
-     *
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return bool Whether the record has been processed
      */
     public function warning($message, array $context = [])
     {
@@ -100,9 +94,7 @@ class PaymentsenseLogger extends \Monolog\Logger
      *
      * @param  string  $message The log message
      * @param  array   $context The log context
-     * @return boolean Whether the record has been processed
-     *
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return bool Whether the record has been processed
      */
     public function info($message, array $context = [])
     {
@@ -121,7 +113,7 @@ class PaymentsenseLogger extends \Monolog\Logger
      *
      * @param  string  $message The log message
      * @param  array   $context The log context
-     * @return boolean Whether the record has been processed
+     * @return bool Whether the record has been processed
      */
     public function debug($message, array $context = [])
     {

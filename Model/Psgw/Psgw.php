@@ -302,7 +302,7 @@ class Psgw
             } else {
                 $trxAttemptsExhausted = true;
             }
-        };
+        }
 
         if ($validResponse) {
             $trxMessage        = $this->getXmlValue('Message', $responseBody, '.+');
@@ -321,7 +321,7 @@ class Psgw
             }
         }
 
-        $result = [
+        return [
             'StatusCode'      => $trxStatusCode,
             'Message'         => $trxMessage,
             'Detail'          => $trxDetail,
@@ -330,8 +330,6 @@ class Psgw
             'PaReq'           => $this->getXmlValue('PaReq', $responseBody, '.+'),
             'ResponseHeaders' => $responseHeaders
         ];
-
-        return $result;
     }
 
     /**

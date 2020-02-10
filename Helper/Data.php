@@ -26,9 +26,8 @@ use Magento\Sales\Model\Order;
 /**
  * Helper common for all payment methods
  *
- * @package Paymentsense\Payments\Helper
- *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  */
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -73,24 +72,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Paymentsense\Payments\Model\ConfigFactory $configFactory,
         \Magento\Framework\Locale\ResolverInterface $localeResolver
     ) {
-        $this->_objectManager  = $objectManager;
-        $this->_paymentData    = $paymentData;
-        $this->_storeManager   = $storeManager;
-        $this->_configFactory  = $configFactory;
+        $this->_objectManager = $objectManager;
+        $this->_paymentData = $paymentData;
+        $this->_storeManager = $storeManager;
+        $this->_configFactory = $configFactory;
         $this->_localeResolver = $localeResolver;
-        $this->_scopeConfig    = $context->getScopeConfig();
+        $this->_scopeConfig = $context->getScopeConfig();
         parent::__construct($context);
-    }
-
-    /**
-     * Creates an instance of the Helper
-     *
-     * @param  \Magento\Framework\ObjectManagerInterface $objectManager
-     * @return \Paymentsense\Payments\Helper\Data
-     */
-    public static function getInstance($objectManager)
-    {
-        return $objectManager->create(get_class());
     }
 
     /**
@@ -227,7 +215,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param \Magento\Framework\Phrase|string $phrase
      * @return \Magento\Framework\Webapi\Exception
      */
-    public static function createWebapiException($phrase)
+    public function createWebapiException($phrase)
     {
         if (!($phrase instanceof \Magento\Framework\Phrase)) {
             $phrase = new \Magento\Framework\Phrase($phrase);
@@ -242,9 +230,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @throws \Magento\Framework\Webapi\Exception
      */
-    public static function throwWebapiException($phrase)
+    public function throwWebapiException($phrase)
     {
-        throw Data::createWebapiException($phrase);
+        // @codingStandardsIgnoreLine
+        throw $this->createWebapiException($phrase);
     }
 
     /**
@@ -265,30 +254,34 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * Sets the AdditionalInfo to the payment transaction
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param array $response
+     * @param array|string $info
      */
-    public function setPaymentTransactionAdditionalInfo($payment, $response)
+    public function setPaymentTransactionAdditionalInfo($payment, $info)
     {
-        $payment->setTransactionAdditionalInfo(
-            Transaction::RAW_DETAILS,
-            $response
-        );
+        $payment->setTransactionAdditionalInfo(Transaction::RAW_DETAILS, $info);
     }
 
     /**
-     * Sets transaction additional information
+     * Gets the AdditionalInfo to the payment transaction
      *
      * @param \Magento\Sales\Model\Order\Payment\Transaction $transaction
-     * @param array $response
-     *
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @param string $element Info element
+     * @return array|string|null
      */
-    public function setTransactionAdditionalInfo($transaction, $response)
+    public function getPaymentTransactionAdditionalInfo($transaction, $element = null)
     {
-        $transaction->setAdditionalInformation(
-            Transaction::RAW_DETAILS,
-            $response
-        );
+        $result = null;
+        $info = $transaction->getAdditionalInformation(Transaction::RAW_DETAILS);
+        if (is_array($info)) {
+            if (isset($element)) {
+                if (array_key_exists($element, $info)) {
+                    $result = $info[$element];
+                }
+            } else {
+                $result = $info;
+            }
+        }
+        return $result;
     }
 
     /**
@@ -356,7 +349,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         if (!empty($fieldValue)) {
             $transactionObj = $this->getObjectManager()->create(Transaction::class);
             $transaction = $transactionObj->load($fieldValue, $fieldName);
-            if (! $transaction->getId()) {
+            if (!$transaction->getId()) {
                 $transaction = null;
             }
         }
@@ -370,11 +363,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param array $transactionTypes
      * @return \Magento\Sales\Model\Order\Payment\Transaction
      */
-    public function lookUpTransaction($payment, $transactionTypes)
+    private function lookUpTransaction($payment, $transactionTypes)
     {
-        $transaction       = null;
+        $transaction = null;
         $lastTransactionId = $payment->getLastTransId();
-        $transaction       = $this->getPaymentTransaction($lastTransactionId, 'txn_id');
+        $transaction = $this->getPaymentTransaction($lastTransactionId, 'txn_id');
         while (isset($transaction)) {
             if (in_array($transaction->getTxnType(), $transactionTypes)) {
                 break;
@@ -493,7 +486,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function isMerchantIdFormatValid($methodCode)
     {
         $methodConfig = $this->getMethodConfig($methodCode);
-        return (bool) preg_match('/^[a-zA-Z]{6}-[0-9]{7}$/', $methodConfig->getMerchantId());
+        return (bool)preg_match('/^[a-zA-Z]{6}-[0-9]{7}$/', $methodConfig->getMerchantId());
     }
 
     /**
@@ -519,5 +512,82 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $localDateTime = date_create();
         return [$localDateTime, $remoteDateTime];
+    }
+
+    /**
+     * Calculates an order/display amount due
+     *
+     * @param \Magento\Sales\Model\Order $order
+     * @param float $amount
+     * @return float|false
+     *
+     */
+    public function calculateOrderAmountDue($order, $amount)
+    {
+        $result = false;
+        if ($order->getBaseTotalDue()) {
+            $orderAmount = $order->getTotalDue();
+            $baseAmount = $order->getBaseTotalDue();
+            if (is_numeric($orderAmount) && is_numeric($baseAmount) && ($baseAmount > 0)) {
+                $rate = $orderAmount / $baseAmount;
+                $result = round($amount * $rate, 2);
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Calculates an order/display amount paid
+     *
+     * @param \Magento\Sales\Model\Order $order
+     * @param float $amount
+     * @return float|false
+     *
+     */
+    public function calculateOrderAmountPaid($order, $amount)
+    {
+        $result = false;
+        if ($order->getBaseTotalPaid()) {
+            $orderAmount = $order->getTotalPaid();
+            $baseAmount = $order->getBaseTotalPaid();
+            if (is_numeric($orderAmount) && is_numeric($baseAmount) && ($baseAmount > 0)) {
+                $rate = $orderAmount / $baseAmount;
+                $result = round($amount * $rate, 2);
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Calculates a base amount
+     *
+     * @param \Magento\Sales\Model\Order $order
+     * @param float $amount
+     * @return float|false
+     *
+     */
+    public function calculateBaseAmount($order, $amount)
+    {
+        $result = false;
+        if ($order->getBaseTotalDue()) {
+            $orderAmount = $order->getTotalDue();
+            $baseAmount = $order->getBaseTotalDue();
+            if (is_numeric($orderAmount) && is_numeric($baseAmount) && ($orderAmount > 0)) {
+                $rate = $baseAmount / $orderAmount;
+                $result = round($amount * $rate, 2);
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Converts boolean to string
+     *
+     * @param boolean $value
+     * @return string
+     */
+    public function getBool($value)
+    {
+        return $value ? 'true' : 'false';
     }
 }

@@ -25,8 +25,6 @@ use Magento\Checkout\Model\Session;
 
 /**
  * Front Controller for Paymentsense Direct method
- *
- * @package Paymentsense\Payments\Controller\Direct
  */
 class Index extends \Paymentsense\Payments\Controller\CheckoutAction
 {

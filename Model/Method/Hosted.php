@@ -30,8 +30,6 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 /**
  * Hosted payment method model
  *
- * @package Paymentsense\Payments\Model\Method
- *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.TooManyFields)
  */
@@ -92,9 +90,11 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Paymentsense\Payments\Helper\Data $moduleHelper
+     * @param \Paymentsense\Payments\Helper\IsoCodes $isoCodes
      * @param \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper
      * @param \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
-     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface,
+     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface
+     * @param \Magento\Framework\Module\Dir\Reader $moduleReader
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
      * @param array $data
@@ -112,6 +112,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         Session $checkoutSession,
         \Paymentsense\Payments\Helper\Data $moduleHelper,
+        \Paymentsense\Payments\Helper\IsoCodes $isoCodes,
         \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper,
         OrderSender $orderSender,
         \Magento\Framework\App\ProductMetadataInterface $productMetadataInterface,
@@ -137,6 +138,7 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
         $this->_storeManager    = $storeManager;
         $this->_checkoutSession = $checkoutSession;
         $this->_moduleHelper    = $moduleHelper;
+        $this->_isoCodes        = $isoCodes;
         $this->_orderSender     = $orderSender;
         $this->_configHelper    = $this->getModuleHelper()->getMethodConfig($this->getCode());
         $this->_messageHelper   = $messageHelper;
@@ -171,6 +173,8 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
      *
      * @param \Magento\Quote\Api\Data\CartInterface|null $quote
      * @return bool
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
@@ -184,14 +188,23 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
      * @param float $amount
      * @return $this
      */
+    // @codingStandardsIgnoreLine
     public function order(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
         $this->getLogger()->info('ACTION_ORDER has been triggered.');
         $order = $payment->getOrder();
         $order->setCanSendNewEmailFlag(false);
         $order->setState(Order::STATE_NEW);
-        $orderId = $order->getRealOrderId();
-        $this->getLogger()->info('New order #' . $orderId . ' with amount ' . $amount . ' has been created.');
+        $this->getLogger()->info(
+            sprintf(
+                'New order #%s with amount %.2f %s (%.2f %s) has been created.',
+                $order->getRealOrderId(),
+                $order->getBaseTotalDue(),
+                $order->getBaseCurrencyCode(),
+                $order->getTotalDue(),
+                $order->getOrderCurrencyCode()
+            )
+        );
         return $this;
     }
 
@@ -248,16 +261,16 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
     /**
      * Gets the transaction status and message from an Order
      *
-     * @param array $data POST/GET data received with the request from the payment gateway
+     * @param string $gatewayOrderId Gateway order ID
      * @return array
      */
-    public function loadTrxStatusAndMessage($data)
+    public function loadTrxStatusAndMessage($gatewayOrderId)
     {
         $trxStatus = TransactionStatus::INVALID;
         $message   = '';
 
-        if (array_key_exists('OrderID', $data)) {
-            $order = $this->getOrder($data);
+        if (isset($gatewayOrderId)) {
+            $order = $this->getOrder($gatewayOrderId);
             if ($order) {
                 foreach ($order->getStatusHistoryCollection() as $_item) {
                     $orderStatus = $_item->getStatus();
@@ -282,19 +295,14 @@ class Hosted extends \Magento\Payment\Model\Method\AbstractMethod
     /**
      * Gets Sales Order
      *
-     * @param array $response An array containing transaction response data from the gateway
+     * @param string|null $gatewayOrderId Gateway order ID
      * @return \Magento\Sales\Model\Order $order
      */
-    public function getOrder($response)
+    public function getOrder($gatewayOrderId)
     {
         $result         = null;
         $orderId        = null;
-        $gatewayOrderId = null;
         $sessionOrderId = $this->getCheckoutSession()->getLastRealOrderId();
-        if (array_key_exists('OrderID', $response)) {
-            $gatewayOrderId = $response['OrderID'];
-        }
-
         switch (true) {
             case empty($gatewayOrderId):
                 $this->getLogger()->error('OrderID returned by the gateway is empty.');

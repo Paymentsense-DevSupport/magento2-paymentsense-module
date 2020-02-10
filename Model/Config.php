@@ -138,6 +138,7 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
      */
     public function getValue($key, $storeId = null)
     {
+        $value = '';
         $underscored = strtolower(preg_replace('/(.)([A-Z])/', "$1_$2", $key));
         $path = $this->getConfigPath($underscored);
         if ($path !== null) {
@@ -146,10 +147,8 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
                 ScopeInterface::SCOPE_STORE,
                 $storeId ?: $this->_storeId
             );
-            return $value;
         }
-
-        return '';
+        return $value;
     }
 
     /**
@@ -178,7 +177,7 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
      * Gets config path by field name
      *
      * @param string $fieldName
-     * @return string|null
+     * @return string
      */
     private function getConfigPath($fieldName)
     {
@@ -390,6 +389,26 @@ class Config implements \Magento\Payment\Model\Method\ConfigInterface
     public function getOrderStatusNew()
     {
         return $this->getValue('order_status');
+    }
+
+    /**
+     * Gets Payment Currency
+     *
+     * @return string
+     */
+    public function getPaymentCurrency()
+    {
+        return $this->getValue('payment_currency');
+    }
+
+    /**
+     * Determines whether the payment currency is the base currency
+     *
+     * @return bool
+     */
+    public function isBaseCurrency()
+    {
+        return 'BASE' === $this->getPaymentCurrency();
     }
 
     /**

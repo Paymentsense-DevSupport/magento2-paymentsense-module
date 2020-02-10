@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Model\Config;
 
 /**
  * Log Level Model Source
- *
- * @package Paymentsense\Payments\Model\Config
  */
 class LogLevel implements \Magento\Framework\Option\ArrayInterface
 {

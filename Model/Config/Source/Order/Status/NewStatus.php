@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Model\Config\Source\Order\Status;
 
 /**
  * Order Statuses source model
- *
- * @package Paymentsense\Payments\Model\Config\Source\Order\Status
  */
 class NewStatus extends \Magento\Sales\Model\Config\Source\Order\Status
 {

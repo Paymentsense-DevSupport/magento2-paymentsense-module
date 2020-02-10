@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Helper;
 
 /**
  * Diagnostic Message helper
- *
- * @package Paymentsense\Payments\Helper
  */
 class DiagnosticMessage extends \Magento\Framework\App\Helper\AbstractHelper
 {

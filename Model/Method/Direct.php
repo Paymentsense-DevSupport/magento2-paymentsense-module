@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Model\Method;
 
 /**
  * Direct payment method model
- *
- * @package Paymentsense\Payments\Model\Method
  */
 class Direct extends Card
 {

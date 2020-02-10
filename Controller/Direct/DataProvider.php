@@ -21,8 +21,6 @@ namespace Paymentsense\Payments\Controller\Direct;
 
 /**
  * Provides data for the form redirecting to the ACS (Access Control Server)
- *
- * @package Paymentsense\Payments\Controller\Direct
  */
 class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
 {
@@ -50,6 +48,7 @@ class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
      * Generates application/json response containing the form data in JSON format
      *
      * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function execute()
     {

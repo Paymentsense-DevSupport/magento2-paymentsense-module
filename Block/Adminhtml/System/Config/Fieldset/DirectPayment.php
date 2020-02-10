@@ -24,8 +24,6 @@ use Magento\Backend\Model\Auth\Session;
 
 /**
  * Renderer for the Direct method in the admin panel
- *
- * @package Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset
  */
 class DirectPayment extends Base\Payment
 {

@@ -105,7 +105,18 @@ GNU General Public License for more details.
                 <field id="allowspecific">1</field>
             </depends>
         </field>
-        <field id="allow_specific_currency" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="payment_currency" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+            <label>Payment Currency</label>
+            <tooltip><![CDATA[This option allows the customer to be charged in the display currency or in the base currency. Applicable in multi-currency configurations.]]></tooltip>
+            <config_path>payment/paymentsense_direct/payment_currency</config_path>
+            <source_model>Paymentsense\Payments\Model\Config\PaymentCurrency</source_model>
+            <validate>required-entry</validate>
+            <depends>
+                <field id="active">1</field>
+            </depends>
+            <can_be_empty>0</can_be_empty>
+        </field>
+        <field id="allow_specific_currency" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Allow Specific Currencies</label>
             <config_path>payment/paymentsense_direct/allow_specific_currency</config_path>
             <source_model>Paymentsense\Payments\Model\Config\Source\Locale\Currency\AllSpecificCurrencies</source_model>
@@ -113,7 +124,7 @@ GNU General Public License for more details.
                 <field id="active">1</field>
             </depends>
         </field>
-        <field id="specific_currencies" translate="label" type="multiselect" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="1">
+        <field id="specific_currencies" translate="label" type="multiselect" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Specific Currencies</label>
             <config_path>payment/paymentsense_direct/specific_currencies</config_path>
             <source_model>Paymentsense\Payments\Model\Config\Source\Locale\Currency\Currency</source_model>
@@ -124,7 +135,7 @@ GNU General Public License for more details.
             </depends>
             <can_be_empty>0</can_be_empty>
         </field>
-        <field id="log_level" translate="label" type="select" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
+        <field id="log_level" translate="label" type="select" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Log Level</label>
             <config_path>payment/paymentsense_direct/log_level</config_path>
             <source_model>Paymentsense\Payments\Model\Config\LogLevel</source_model>
