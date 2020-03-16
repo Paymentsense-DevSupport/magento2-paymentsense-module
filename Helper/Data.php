@@ -590,4 +590,66 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $value ? 'true' : 'false';
     }
+
+    /**
+     * Converts HTML entities to their corresponding characters and replaces the chars that are not supported
+     * by the gateway with supported ones
+     *
+     * @param string $data
+     * @return string
+     */
+    public function filterUnsupportedChars($data)
+    {
+        $data = $this->htmlDecode($data);
+        return str_replace(
+            ['"', '\'', '\\', '<', '>', '[', ']'],
+            ['`', '`',  '/',  '(', ')', '(', ')'],
+            $data
+        );
+    }
+
+    /**
+     * Converts HTML entities to their corresponding characters
+     *
+     * @param string $data
+     * @return string
+     */
+    public function htmlDecode($data)
+    {
+        return str_replace(
+            ['&quot;', '&apos;', '&#039;', '&amp;'],
+            ['"',      '\'',    '\'',      '&'],
+            $data
+        );
+    }
+
+    /**
+     * Applies the gateway's restrictions on the length of selected alphanumeric fields sent to the HPF
+     *
+     * @param array $data
+     * @return array
+     */
+    public function applyLengthRestrictions($data)
+    {
+        $result = [];
+        $mexLengths = [
+            'OrderDescription' => 256,
+            'CustomerName'     => 100,
+            'Address1'         => 100,
+            'Address2'         => 50,
+            'Address3'         => 50,
+            'Address4'         => 50,
+            'City'             => 50,
+            'State'            => 50,
+            'PostCode'         => 50,
+            'EmailAddress'     => 100,
+            'PhoneNumber'      => 30
+        ];
+        foreach ($data as $key => $value) {
+            $result[$key] = array_key_exists($key, $mexLengths)
+                ? substr($value, 0, $mexLengths[$key])
+                : $value;
+        }
+        return $result;
+    }
 }

@@ -24,6 +24,12 @@ namespace Paymentsense\Payments\Model\Psgw;
  */
 class Psgw
 {
+    const PAYMENT_FORM_URL = 'https://mms.paymentsensegateway.com/Pages/PublicPages/PaymentForm.aspx';
+    const PAYMENT_GATEWAYS = [
+        1 => 'https://gw1.paymentsensegateway.com:4430/',
+        2 => 'https://gw2.paymentsensegateway.com:4430/'
+    ];
+
     /**
      * @var int $trxMaxAttempts Number of attempts to perform a transaction
      */
@@ -272,7 +278,7 @@ class Psgw
                 $gatewayId++;
             }
 
-            $url = GatewayEndpoints::getPaymentGatewayUrl($gatewayId);
+            $url = $this->getPaymentGatewayUrl($gatewayId);
             if (is_string($url)) {
                 $data = [
                     'url'     => $url,
@@ -368,6 +374,31 @@ class Psgw
         $client->setRawData($data['xml']);
         $client->setHeaders($data['headers']);
         return $client->request($data['method']);
+    }
+
+    /**
+     * Gets Hosted Payment Form URL
+     *
+     * @return string
+     */
+    public function getPaymentFormUrl()
+    {
+        return self::PAYMENT_FORM_URL;
+    }
+
+    /**
+     * Gets Payment Gateway URL
+     *
+     * @param int $gatewayId Gateway ID.
+     * @return string|false
+     */
+    public function getPaymentGatewayUrl($gatewayId)
+    {
+        $result = false;
+        if (array_key_exists($gatewayId, self::PAYMENT_GATEWAYS)) {
+            $result = self::PAYMENT_GATEWAYS[$gatewayId];
+        }
+        return $result;
     }
 
     /**

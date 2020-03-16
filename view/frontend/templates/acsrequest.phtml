@@ -1,7 +1,11 @@
 <script>
     require(['Paymentsense_Payments/js/view/acs']);
     //<![CDATA[
-    psAcsData = <?= json_encode($block->getAcsData()) ?>;
+    let psAcsData = {
+    <?php foreach ($block->getAcsData() as $key => $value) : ?>
+    <?php echo $block->escapeHtml($key); ?> : "<?php echo $block->escapeHtml($value); ?>",
+    <?php endforeach; ?>
+    }
     //]]>
 </script>
 <div id="contentDiv"></div>

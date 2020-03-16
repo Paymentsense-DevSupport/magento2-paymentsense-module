@@ -34,7 +34,9 @@ class HashMethods implements \Magento\Framework\Option\ArrayInterface
         return [
             ['value' => 'SHA1', 'label' => 'SHA1'],
             ['value' => 'HMACSHA1', 'label' => 'HMACSHA1'],
-            ['value' => 'HMACMD5', 'label' => 'HMACMD5']
+            ['value' => 'HMACMD5', 'label' => 'HMACMD5'],
+            ['value' => 'HMACSHA256', 'label' => 'HMACSHA256'],
+            ['value' => 'HMACSHA512', 'label' => 'HMACSHA512']
         ];
     }
 }

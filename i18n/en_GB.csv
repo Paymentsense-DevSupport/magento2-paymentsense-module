@@ -11,7 +11,7 @@ Collapse,Collapse
 "REFUND transaction failed. ","REFUND transaction failed. "
 "VOID transaction failed. ","VOID transaction failed. "
 "Payment gateway message: ","Payment gateway message: "
-"Cancel order & restore cart","Cancel order & restore cart"
+"Cancel order and restore cart","Cancel order and restore cart"
 "An error occurred while processing 3-D Secure authentication.","An error occurred while processing 3-D Secure authentication."
 "Continue to the payment methods","Continue to the payment methods"
 "Error: Transaction type ""%s"" is not supported","Error: Transaction type ""%s"" is not supported"

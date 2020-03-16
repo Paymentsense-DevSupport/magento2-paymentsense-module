@@ -87,6 +87,13 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 2.3.2
+##### Added
+- HMACSHA256 and HMACSHA512 hash methods (Paymentsense Hosted)
+- Filter for characters not supported by the HPF (Paymentsense Hosted)
+- Length restriction of fields sent to the HPF (Paymentsense Hosted)
+
+
 ### 2.3.1
 ##### Added
 - Option for charging in the base currency

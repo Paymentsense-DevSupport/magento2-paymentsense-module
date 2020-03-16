@@ -37,7 +37,7 @@ class Acs extends \Magento\Framework\View\Element\Template
     public function getCancelOrderText()
     {
         try {
-            $result = __('Cancel order & restore cart');
+            $result = __('Cancel order and restore cart');
         } catch (\Exception $e) {
             $result = false;
         }

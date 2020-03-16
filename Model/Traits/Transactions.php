@@ -24,7 +24,6 @@ use Paymentsense\Payments\Model\Psgw\Psgw;
 use Paymentsense\Payments\Model\Psgw\TransactionType;
 use Paymentsense\Payments\Model\Psgw\TransactionResultCode;
 use Paymentsense\Payments\Model\Psgw\HpfResponses;
-use Paymentsense\Payments\Model\Psgw\GatewayEndpoints;
 use Magento\Sales\Model\Order;
 
 /**
@@ -643,7 +642,7 @@ trait Transactions
                 'Content-Length: ' . strlen($postData)
             ];
             $data              = [
-                'url'     => GatewayEndpoints::getPaymentFormUrl(),
+                'url'     => $psgw->getPaymentFormUrl(),
                 'method'  => 'POST',
                 'headers' => $headers,
                 'xml'     => $postData
@@ -653,7 +652,7 @@ trait Transactions
             $responseHeaders = $response->getHeaders();
 
             if ($responseHeaders && array_key_exists('Date', $responseHeaders)) {
-                $this->addDateTimePair(GatewayEndpoints::getPaymentFormUrl(), $responseHeaders['Date']);
+                $this->addDateTimePair($psgw->getPaymentFormUrl(), $responseHeaders['Date']);
             }
 
             $responseBody    = $response->getBody();
@@ -697,15 +696,20 @@ trait Transactions
      */
     public function buildHpfFields($order = null)
     {
-        $config = $this->getConfigHelper();
-        $fields = $order ? $this->buildPaymentFields($order) : $this->buildSamplePaymentFields();
+        $config            = $this->getConfigHelper();
+        $objectManager     = $this->getModuleHelper()->getObjectManager();
+        $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
+        $psgw              = new Psgw($zendClientFactory);
+        $fields            = $order ? $this->buildPaymentFields($order) : $this->buildSamplePaymentFields();
 
         $fields = array_map(
             function ($value) {
-                return $value === null ? '' : $value;
+                return $value === null ? '' : $this->getModuleHelper()->filterUnsupportedChars($value);
             },
             $fields
         );
+
+        $fields = $this->getModuleHelper()->applyLengthRestrictions($fields);
 
         $data  = 'MerchantID=' . $config->getMerchantId();
         $data .= '&Password=' . $config->getPassword();
@@ -737,7 +741,7 @@ trait Transactions
         }
 
         return [
-            'url'      => GatewayEndpoints::getPaymentFormUrl(),
+            'url'      => $psgw->getPaymentFormUrl(),
             'elements' => $fields
         ];
     }
@@ -874,7 +878,7 @@ trait Transactions
 
     /**
      * Calculates the hash digest.
-     * Supported hash methods: SHA1, HMACMD5, HMACSHA1
+     * Supported hash methods: SHA1, HMACMD5, HMACSHA1, HMACSHA256 and HMACSHA512
      *
      * @param string $data Data to be hashed.
      * @param string $hashMethod Hash method.
@@ -900,6 +904,12 @@ trait Transactions
                 break;
             case 'HMACSHA1':
                 $result = hash_hmac('sha1', $data, $key);
+                break;
+            case 'HMACSHA256':
+                $result = hash_hmac('sha256', $data, $key);
+                break;
+            case 'HMACSHA512':
+                $result = hash_hmac('sha512', $data, $key);
                 break;
         }
         return $result;
