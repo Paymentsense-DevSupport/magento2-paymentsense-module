@@ -569,9 +569,9 @@ trait Transactions
         $psgw->setTrxMaxAttempts(1);
         $result = $psgw->performGetGatewayEntryPointsTxn($request);
 
-        foreach ($result['ResponseHeaders'] as $url => $header) {
-            if (array_key_exists('Date', $header)) {
-                $this->addDateTimePair($url, $header['Date']);
+        foreach ($result['ResponseHeaders'] as $url => $responseHeaders) {
+            if (is_array($responseHeaders) && array_key_exists('Date', $responseHeaders)) {
+                $this->addDateTimePair($url, $responseHeaders['Date']);
             }
         }
 
@@ -651,7 +651,7 @@ trait Transactions
             $response        = $psgw->executeHttpRequest($data);
             $responseHeaders = $response->getHeaders();
 
-            if ($responseHeaders && array_key_exists('Date', $responseHeaders)) {
+            if (is_array($responseHeaders) && array_key_exists('Date', $responseHeaders)) {
                 $this->addDateTimePair($psgw->getPaymentFormUrl(), $responseHeaders['Date']);
             }
 
@@ -775,7 +775,7 @@ trait Transactions
             'City'                      => $billingAddress->getCity(),
             'State'                     => $billingAddress->getRegionCode(),
             'PostCode'                  => $billingAddress->getPostcode(),
-            'CountryCode'               => $isoHelper->getCountryIsoCode($billingAddress-> getCountryId()),
+            'CountryCode'               => $isoHelper->getCountryCode($billingAddress-> getCountryId()),
             'EmailAddress'              => $order->getCustomerEmail(),
             'PhoneNumber'               => $billingAddress->getTelephone(),
             'EmailAddressEditable'      => $moduleHelper->getBool($config->getEmailAddressEditable()),

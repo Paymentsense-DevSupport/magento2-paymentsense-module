@@ -632,7 +632,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function applyLengthRestrictions($data)
     {
         $result = [];
-        $mexLengths = [
+        $maxLengths = [
             'OrderDescription' => 256,
             'CustomerName'     => 100,
             'Address1'         => 100,
@@ -646,8 +646,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             'PhoneNumber'      => 30
         ];
         foreach ($data as $key => $value) {
-            $result[$key] = array_key_exists($key, $mexLengths)
-                ? substr($value, 0, $mexLengths[$key])
+            $result[$key] = array_key_exists($key, $maxLengths)
+                ? substr($value, 0, $maxLengths[$key])
                 : $value;
         }
         return $result;

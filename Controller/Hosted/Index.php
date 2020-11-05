@@ -120,7 +120,7 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
     {
         $postData = [];
         if ($this->getRequest()->isPost()) {
-            $postData = $this->getRequest()->getPost();
+            $postData = $this->getPostData();
         }
 
         return array_key_exists('StatusCode', $postData) && is_numeric($postData['StatusCode'])

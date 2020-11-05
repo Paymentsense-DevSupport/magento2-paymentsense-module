@@ -26,14 +26,14 @@ namespace Paymentsense\Payments\Helper;
 class IsoCodes extends \Magento\Framework\App\Helper\AbstractHelper
 {
     /**
-     * Gets country ISO 3166-1 code
+     * Gets the numeric country ISO 3166-1 code
      *
-     * @param  string $countryCode Country 3166-1 code.
+     * @param  string $countryCode Alpha-2 country code
      * @return string
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getCountryIsoCode($countryCode)
+    public function getCountryCode($countryCode)
     {
         $result   = '';
         $isoCodes = [
@@ -270,10 +270,10 @@ class IsoCodes extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Gets currency ISO 4217 code
+     * Gets the numeric currency ISO 4217 code
      *
-     * @param string $currencyCode Currency 4217 code.
-     * @param string $defaultCode Default currency code.
+     * @param string $currencyCode Alphabetic currency code
+     * @param string $defaultCode Default numeric currency code
      * @return string
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)

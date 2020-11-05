@@ -329,7 +329,7 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
             'City'             => $billingAddress->getCity(),
             'State'            => $billingAddress->getRegionCode(),
             'PostCode'         => $billingAddress->getPostcode(),
-            'CountryCode'      => $isoHelper->getCountryIsoCode($billingAddress-> getCountryId()),
+            'CountryCode'      => $isoHelper->getCountryCode($billingAddress-> getCountryId()),
             'EmailAddress'     => $order->getCustomerEmail(),
             'PhoneNumber'      => $billingAddress->getTelephone(),
             'IPAddress'        => $order->getRemoteIp(),

@@ -27,13 +27,14 @@ class Psgw
     const PAYMENT_FORM_URL = 'https://mms.paymentsensegateway.com/Pages/PublicPages/PaymentForm.aspx';
     const PAYMENT_GATEWAYS = [
         1 => 'https://gw1.paymentsensegateway.com:4430/',
-        2 => 'https://gw2.paymentsensegateway.com:4430/'
+        2 => 'https://gw2.paymentsensegateway.com:4430/',
+        3 => 'https://gw3.paymentsensegateway.com:4430/'
     ];
 
     /**
      * @var int $trxMaxAttempts Number of attempts to perform a transaction
      */
-    protected $trxMaxAttempts = 3;
+    protected $trxMaxAttempts = 2;
 
     /**
      * @var \Magento\Framework\HTTP\ZendClientFactory $clientFactory

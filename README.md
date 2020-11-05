@@ -6,7 +6,7 @@ Payment module for Magento 2 Open Source (Community Edition), allowing you to ta
 Requirements
 ------------
 
-* Magento 2.3 Open Source (tested up to 2.3.4)
+* Magento Open Source version 2.3.x or 2.4.x (tested up to 2.4.1)
 * PCI-certified server using SSL/TLS (required for Direct and MOTO payment methods)
 * Open outbound port 4430 in order to use the Direct and MOTO payment methods and for performing cross reference transactions (Collection, Refund and Void)
 
@@ -87,6 +87,14 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 2.4.0
+##### Added
+- Support of Magento 2.4
+- gw3 gateway entry point
+- Billing address to the payment method selecting page (Paymentsense Hosted)
+- Code optimisation and rework
+
+
 ### 2.3.2
 ##### Added
 - HMACSHA256 and HMACSHA512 hash methods (Paymentsense Hosted)
@@ -152,7 +160,7 @@ Changelog
 
 ### 2.0.3
 ##### Added
-- Support of Magento 2.3.x. CSRF protection compliance.
+- Support of Magento 2.3.x. CSRF protection compliance
 - Module information reporting feature
 
 ##### Changed

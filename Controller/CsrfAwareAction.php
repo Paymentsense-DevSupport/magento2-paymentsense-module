@@ -19,19 +19,20 @@
 
 namespace Paymentsense\Payments\Controller;
 
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
+
 /**
  * Abstract CsrfAwareAction class
  */
 abstract class CsrfAwareAction extends Action implements \Magento\Framework\App\CsrfAwareActionInterface
 {
-    // @codingStandardsIgnoreLine
-    public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
+    public function validateForCsrf(RequestInterface $request): ?bool
     {
         return true;
     }
 
-    // @codingStandardsIgnoreLine
-    public function createCsrfValidationException(\Magento\Framework\App\RequestInterface $request): ?\Magento\Framework\App\Request\InvalidRequestException
+    public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
     {
         return null;
     }
