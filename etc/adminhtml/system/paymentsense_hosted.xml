@@ -20,7 +20,7 @@ GNU General Public License for more details.
     <group id="paymentsense_hosted" translate="label comment" showInDefault="1" showInWebsite="1" showInStore="1" sortOrder="1">
         <label>Paymentsense Hosted</label>
         <frontend_model>Paymentsense\Payments\Block\Adminhtml\System\Config\Fieldset\HostedPayment</frontend_model>
-        <comment><![CDATA[Accept credit/debit cards by collecting customer card data on a secure form on the Paymentsense Gateway.]]></comment>
+        <comment><![CDATA[Accept credit/debit cards by collecting customer card data on a secure form on the Paymentsense Gateway.<br>An SSL/TLS connection is highly recommended for this payment method.]]></comment>
         <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
             <label>Enabled</label>
             <config_path>payment/paymentsense_hosted/active</config_path>

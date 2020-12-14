@@ -20,6 +20,7 @@ Collapse,Collapse
 "Connection to Gateway Servers:","Connection to Gateway Servers:"
 "Gateway Settings:","Gateway Settings:"
 "System Time:","System Time:"
+"SameSite Cookie:","SameSite Cookie:"
 "Testing...","Testing..."
 "Disabled","Disabled"
 "Unknown","Unknown"
@@ -39,3 +40,9 @@ Collapse,Collapse
 "Gateway MerchantID and Gateway Password are valid.","Gateway MerchantID and Gateway Password are valid."
 "The gateway settings cannot be validated at this time.","The gateway settings cannot be validated at this time."
 "The system time is out of sync with the gateway with %+d seconds. Please check your system time.","The system time is out of sync with the gateway with %+d seconds. Please check your system time."
+"Thank you for your purchase!","Thank you for your purchase!"
+"Your order # is: <span>%1</span>.","Your order # is: <span>%1</span>."
+"We\'ll email you an order confirmation with details and tracking info.","We\'ll email you an order confirmation with details and tracking info."
+"Continue Shopping","Continue Shopping"
+"SSL/TLS is not configured or/and the installed Magento version does not support re-configuration of the 'samesite' cookie attribute. ","SSL/TLS is not configured or/and the installed Magento version does not support re-configuration of the 'samesite' cookie attribute. "
+"Please configure SSL/TLS or/and upgrade your Magento.","Please configure SSL/TLS or/and upgrade your Magento.",

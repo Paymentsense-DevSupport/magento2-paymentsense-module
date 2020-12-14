@@ -37,6 +37,7 @@ class DiagnosticMessage extends \Magento\Framework\App\Helper\AbstractHelper
     const MESSAGE_TYPE_STATUS      = 'status';
     const MESSAGE_TYPE_CONNECTION  = 'connection';
     const MESSAGE_TYPE_SETTINGS    = 'settings';
+    const MESSAGE_TYPE_SSCOOKIE    = 'sscookie';
     const MESSAGE_TYPE_SYSTEM_TIME = 'stime';
 
     /**
@@ -187,6 +188,23 @@ class DiagnosticMessage extends \Magento\Framework\App\Helper\AbstractHelper
     public function buildErrorSettingsMessage($text)
     {
         return $this->buildMessage($text, self::ERROR_CLASS_NAME, self::MESSAGE_TYPE_SETTINGS);
+    }
+
+    /**
+     * Builds a localised error message about the "samesite" cookie
+     *
+     * @return array
+     */
+    public function buildErrorSameSiteCookieMessage()
+    {
+        return $this->buildMessage(
+            __(
+                "SSL/TLS is not configured or/and the installed Magento version does not support re-configuration of the 'samesite' cookie attribute. "
+                . 'Please configure SSL/TLS or/and upgrade your Magento.'
+            ),
+            self::ERROR_CLASS_NAME,
+            self::MESSAGE_TYPE_SSCOOKIE
+        );
     }
 
     /**

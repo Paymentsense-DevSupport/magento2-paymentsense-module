@@ -17,46 +17,49 @@
  * @license     https://www.gnu.org/licenses/gpl-3.0.html
  */
 
-namespace Paymentsense\Payments\Controller\Hosted;
+namespace Paymentsense\Payments\Controller\Direct;
 
 /**
- * Provides data for the form redirecting to the Hosted Payment Form
+ * Handles the request for showing the order confirmation page
  */
-class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
+class OrderConfirmation extends \Paymentsense\Payments\Controller\CheckoutAction
 {
     /**
+     * @var \Magento\Framework\View\Result\PageFactory
+     */
+    protected $_resultPageFactory;
+
+    /**
      * @param \Magento\Framework\App\Action\Context $context
+     * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Magento\Sales\Model\OrderFactory $orderFactory
-     * @param \Paymentsense\Payments\Model\Method\Hosted
+     * @param \Paymentsense\Payments\Model\Method\Direct
      */
     // @codingStandardsIgnoreStart
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
+        \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Sales\Model\OrderFactory $orderFactory,
-        \Paymentsense\Payments\Model\Method\Hosted $method
+        \Paymentsense\Payments\Model\Method\Direct $method
     ) {
+        $this->_resultPageFactory = $resultPageFactory;
         parent::__construct($context, $logger, $checkoutSession, $orderFactory, $method);
     }
     // @codingStandardsIgnoreEnd
 
     /**
-     * Handles ajax requests and provides the form data for redirecting to the Hosted Payment Form
-     * Generates application/json response containing the form data in JSON format
+     * Shows the order confirmation page
      *
-     * @throws \Exception
+     * @return \Magento\Framework\View\Result\Page
      */
     public function execute()
     {
-        $order = $this->getOrder();
-        if (isset($order)) {
-            $data = $this->_method->buildHpfFields($order);
-            $this->getResponse()
-                ->setHeader('Content-Type', 'application/json')
-                ->setBody(json_encode($data));
-        }
+        $resultPage = $this->_resultPageFactory->create();
+        $resultPage->addHandle('order_confirmation');
+        return $resultPage;
     }
 }

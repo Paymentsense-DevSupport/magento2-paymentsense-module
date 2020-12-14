@@ -20,6 +20,7 @@
 namespace Paymentsense\Payments\Controller;
 
 use Magento\Backend\Model\Session;
+use Magento\Framework\Stdlib\Cookie\PublicCookieMetadata;
 
 /**
  * Abstract action class implementing redirect actions
@@ -50,23 +51,31 @@ abstract class StatusAction extends CsrfAwareAction
     protected $_method;
 
     /**
+     * @var PublicCookieMetadata
+     */
+    protected $_publicCookieMetadata;
+
+    /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper
      * @param \Magento\Backend\Model\Session $backendSession
      * @param \Magento\Payment\Model\Method\AbstractMethod $method
+     * @param PublicCookieMetadata|null $publicCookieMetadata
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
         \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper,
         Session $backendSession,
-        $method
+        $method,
+        PublicCookieMetadata $publicCookieMetadata = null
     ) {
         parent::__construct($context, $logger);
-        $this->_messageHelper = $messageHelper;
-        $this->_backendSession = $backendSession;
-        $this->_method         = $method;
+        $this->_messageHelper        = $messageHelper;
+        $this->_backendSession       = $backendSession;
+        $this->_method               = $method;
+        $this->_publicCookieMetadata = $publicCookieMetadata;
     }
 
     /**
@@ -110,6 +119,23 @@ abstract class StatusAction extends CsrfAwareAction
     protected function getSettingsMessage()
     {
         return $this->_method->getSettingsMessage(false);
+    }
+
+    /**
+     * Gets the "samesite" cookie message if SSL/TLS is not configured or/and the installed
+     * Magento version does not support re-configuration of the 'samesite' cookie attribute
+     *
+     * @return array
+     */
+    protected function getSameSiteCookieMessage()
+    {
+        $result = [];
+        if (!$this->_method->isSecure()
+            || !is_callable([$this->_publicCookieMetadata, 'setSameSite'])
+            || !is_callable([$this->_publicCookieMetadata, 'getSecure'])) {
+            $result = $this->_messageHelper->buildErrorSameSiteCookieMessage();
+        }
+        return $result;
     }
 
     /**

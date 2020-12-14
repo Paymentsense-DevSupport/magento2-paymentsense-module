@@ -17,4 +17,7 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Framework\Stdlib\Cookie\PhpCookieManager">
+        <plugin name="cookie_switcher" type="Paymentsense\Payments\Plugin\CookieSwitcher" sortOrder="10"/>
+    </type>
 </config>

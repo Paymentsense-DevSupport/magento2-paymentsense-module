@@ -7,8 +7,10 @@ Requirements
 ------------
 
 * Magento Open Source version 2.3.x or 2.4.x (tested up to 2.4.1)
-* PCI-certified server using SSL/TLS (required for Direct and MOTO payment methods)
+* PCI-certified server using SSL/TLS (required for Direct and MOTO payment methods and highly recommended for the Hosted payment method\*)
 * Open outbound port 4430 in order to use the Direct and MOTO payment methods and for performing cross reference transactions (Collection, Refund and Void)
+
+\* Using the Hosted payment method without SSL/TLS may result to empty customer's session after returning from the Hosted Payment Form of the payment gateway and respectively the customer's shopping cart would not be restored in case of an unsuccessful payment on some web browsers.
 
 Installation using Composer
 ---------------------------
@@ -86,6 +88,14 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 
 Changelog
 ---------
+
+### 2.4.1
+##### Added
+- Plugin switching the "samesite" cookie attribute (requires SSL/TLS and Magento 2.4.1 or greater)
+
+##### Changed
+- Order confirmation page
+
 
 ### 2.4.0
 ##### Added

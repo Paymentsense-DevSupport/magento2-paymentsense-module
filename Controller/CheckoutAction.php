@@ -21,6 +21,9 @@ namespace Paymentsense\Payments\Controller;
 
 use Magento\Sales\Model\Order;
 use Magento\Checkout\Model\Session;
+use Paymentsense\Payments\Model\Method\Hosted;
+use Paymentsense\Payments\Model\Method\Direct;
+use Paymentsense\Payments\Model\Method\Moto;
 
 /**
  * Abstract action class implementing redirect actions
@@ -38,7 +41,7 @@ abstract class CheckoutAction extends CsrfAwareAction
     protected $_orderFactory;
 
     /**
-     * @var \Paymentsense\Payments\Model\Method\Hosted|\Paymentsense\Payments\Model\Method\Direct|\Paymentsense\Payments\Model\Method\Moto
+     * @var Hosted|Direct|Moto
      */
     protected $_method;
 
@@ -135,8 +138,8 @@ abstract class CheckoutAction extends CsrfAwareAction
     protected function executeSuccessAction()
     {
         $this->_method->getLogger()->info('Success Action has been triggered.');
-        $this->redirectToCheckoutOnePageSuccess();
-        $this->_method->getLogger()->info('A redirect to the Checkout Success Page has been set.');
+        $this->redirectToOrderConfirmation();
+        $this->_method->getLogger()->info('A redirect to the Order Confirmation has been set.');
     }
 
     /**
@@ -156,14 +159,6 @@ abstract class CheckoutAction extends CsrfAwareAction
     }
 
     /**
-     * Handles 3-D Secure Authentication Request Action
-     */
-    protected function execute3dsRequestAction()
-    {
-        $this->redirectToCheckoutOnePageSuccess();
-    }
-
-    /**
      * Handles Cancel Action
      *
      * @param string $message
@@ -179,23 +174,17 @@ abstract class CheckoutAction extends CsrfAwareAction
     }
 
     /**
-     * Redirects to the Checkout Success Page
+     * Redirects to the Order Confirmation Page
      *
      * @return void
      */
-    protected function redirectToCheckoutOnePageSuccess()
+    protected function redirectToOrderConfirmation()
     {
-        $this->_redirect('checkout/onepage/success');
-    }
-
-    /**
-     * Redirects to the page performing redirect to the ACS (Access Control Server)
-     *
-     * @return void
-     */
-    protected function redirectToAvsRedirectPage()
-    {
-        $this->_redirect('paymentsense/direct', ['action' => Action::THREEDSCANCEL]);
+        $sessionOrderId = $this->getCheckoutSession()->getLastRealOrderId();
+        $gatewayOrderId = $this->getRequest()->getParam('OrderID');
+        $orderId        = $sessionOrderId ? $sessionOrderId : $gatewayOrderId;
+        $method         = ($this->_method instanceof Hosted) ? 'hosted' : 'direct';
+        $this->_redirect("paymentsense/$method/orderconfirmation", ['orderID' => $orderId]);
     }
 
     /**

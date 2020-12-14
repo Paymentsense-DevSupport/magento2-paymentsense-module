@@ -97,11 +97,14 @@ trait BaseMethod
      * Determines whether the store is secure
      *
      * @return bool
-     *
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function isSecure()
     {
-        return $this->getModuleHelper()->isStoreSecure();
+        try {
+            $result = $this->getModuleHelper()->isStoreSecure();
+        } catch (\Exception $e) {
+            $result = false;
+        }
+        return $result;
     }
 }

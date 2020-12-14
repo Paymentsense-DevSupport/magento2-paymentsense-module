@@ -193,7 +193,7 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
             if (isset($acsUrl)) {
                 $result = $this->performAcsRedirect();
             } else {
-                $this->redirectToCheckoutOnePageSuccess();
+                $this->executeSuccessAction();
             }
         } else {
             $this->executeCancelAction('An error occurred. Order not found.');

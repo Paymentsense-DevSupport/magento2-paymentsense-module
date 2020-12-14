@@ -113,6 +113,9 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
         $html .= '</div><div class="settingsDiv">';
         $html .= '<span>' . __('Gateway Settings:') . ' </span>';
         $html .= '<span id="' . $htmlId . '-settings">' . $initialCommonMsg . '</span>';
+        $html .= '</div><div id="' . $htmlId . '-sscookie-div" class="sscookieDiv" style="display: none">';
+        $html .= '<span>' . __('SameSite Cookie:') . ' </span>';
+        $html .= '<span id="' . $htmlId . '-sscookie">' . $initialCommonMsg . '</span>';
         $html .= '</div><div id="' . $htmlId . '-stime-div" class="stimeDiv" style="display: none">';
         $html .= '<span>' . __('System Time:') . ' </span>';
         $html .= '<span id="' . $htmlId . '-stime">' . $initialCommonMsg . '</span>';
@@ -187,6 +190,7 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
                     var statusSpan = document.getElementById('" . $htmlId . "-status');
                     var connectionSpan = document.getElementById('" . $htmlId . "-connection');
                     var settingsSpan = document.getElementById('" . $htmlId . "-settings');
+                    var sscookieSpan = document.getElementById('" . $htmlId . "-sscookie');
                     var stimeSpan = document.getElementById('" . $htmlId . "-stime');
                     statusSpan.innerHTML = data.statusText;
                     statusSpan.className = data.statusClassName;
@@ -194,6 +198,11 @@ abstract class Payment extends \Magento\Config\Block\System\Config\Form\Fieldset
                     connectionSpan.className = data.connectionClassName;
                     settingsSpan.innerHTML = data.settingsText;
                     settingsSpan.className = data.settingsClassName;
+                    if (data.sscookieText != null) {
+                        sscookieSpan.innerHTML = data.sscookieText;
+                        sscookieSpan.className = data.sscookieClassName;
+                        document.getElementById('" . $htmlId . "-sscookie-div').style.display = \"block\";
+                    }
                     if (data.stimeText != null) {
                         stimeSpan.innerHTML = data.stimeText;
                         stimeSpan.className = data.stimeClassName;
