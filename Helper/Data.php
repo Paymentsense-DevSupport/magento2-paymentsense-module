@@ -602,8 +602,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $data = $this->htmlDecode($data);
         return str_replace(
-            ['"', '\'', '\\', '<', '>', '[', ']'],
-            ['`', '`',  '/',  '(', ')', '(', ')'],
+            ['"', '\'', '\\', '<', '>', '[', ']', '#', '&'],
+            ['`', '`',  '/',  '(', ')', '(', ')', '',  ''],
             $data
         );
     }
@@ -617,8 +617,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function htmlDecode($data)
     {
         return str_replace(
-            ['&quot;', '&apos;', '&#039;', '&amp;'],
-            ['"',      '\'',    '\'',      '&'],
+            ['&quot;', '&apos;', '&#039;', '&amp;', '&num;', '&#35;'],
+            ['"',      '\'',     '\'',     '&',     '#',     '#'],
             $data
         );
     }

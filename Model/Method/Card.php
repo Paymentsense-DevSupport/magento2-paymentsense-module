@@ -353,7 +353,15 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
         $order             = $payment->getOrder();
         $orderId           = $order->getRealOrderId();
         $transactionType   = $config->getTransactionType();
-        $request           = $this->buildInitialTransactionData($payment);
+        $fields            = $this->buildInitialTransactionData($payment);
+
+        $request = array_map(
+            function ($value) {
+                return $value === null ? '' : $this->getModuleHelper()->filterUnsupportedChars($value);
+            },
+            $fields
+        );
+
         $objectManager     = $this->getModuleHelper()->getObjectManager();
         $zendClientFactory = new \Magento\Framework\HTTP\ZendClientFactory($objectManager);
         $psgw              = new Psgw($zendClientFactory);

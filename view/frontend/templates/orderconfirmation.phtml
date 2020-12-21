@@ -1,15 +1,15 @@
 <div class="page-title-wrapper">
     <h1 class="page-title">
-        <span class="base" data-ui-id="page-title-wrapper"><?php echo $block->escapeHtml(__('Thank you for your purchase!')); ?></span>
+        <span class="base" data-ui-id="page-title-wrapper"><?= $block->escapeHtml(__('Thank you for your purchase!')) ?></span>
     </h1>
 </div>
 <div class="checkout-success">
-    <p><?php echo $block->escapeHtml(__('Your order # is: <span>%1</span>.', $block->getOrderId()), ['span']); ?></p>
-    <p><?php echo $block->escapeHtml(__('We\'ll email you an order confirmation with details and tracking info.')); ?></p>
-    <?php if ($block->getContinueUrl()) :?>
+    <p><?= $block->escapeHtml(__('Your order # is: <span>%1</span>.', $block->getOrderId()), ['span']) ?></p>
+    <p><?= $block->escapeHtml(__('We\'ll email you an order confirmation with details and tracking info.')) ?></p>
+    <?php if ($block->getContinueUrl()): ?>
         <div class="actions-toolbar">
             <div class="primary">
-                <a class="action primary continue" href="<?php echo $block->escapeUrl($block->getContinueUrl()); ?>"><span><?php echo $block->escapeHtml(__('Continue Shopping')); ?></span></a>
+                <a class="action primary continue" href="<?= $block->escapeUrl($block->getContinueUrl()) ?>"><span><?= $block->escapeHtml(__('Continue Shopping')) ?></span></a>
             </div>
         </div>
     <?php endif; ?>

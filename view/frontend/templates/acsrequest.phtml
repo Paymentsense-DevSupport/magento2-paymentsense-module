@@ -2,8 +2,8 @@
     require(['Paymentsense_Payments/js/view/acs']);
     //<![CDATA[
     let psAcsData = {
-    <?php foreach ($block->getAcsData() as $key => $value) : ?>
-    <?php echo $block->escapeHtml($key); ?> : "<?php echo $block->escapeHtml($value); ?>",
+    <?php foreach ($block->getAcsData() as $key => $value): ?>
+        <?= $block->escapeHtml($key) ?> : "<?= $block->escapeHtml($value) ?>",
     <?php endforeach; ?>
     }
     //]]>

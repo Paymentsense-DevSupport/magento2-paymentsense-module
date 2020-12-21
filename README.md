@@ -89,6 +89,11 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 2.4.2
+##### Changed
+- Filter for the characters not supported by the gateway
+
+
 ### 2.4.1
 ##### Added
 - Plugin switching the "samesite" cookie attribute (requires SSL/TLS and Magento 2.4.1 or greater)
