@@ -20,6 +20,7 @@
 namespace Paymentsense\Payments\Controller\Direct;
 
 use Magento\Backend\Model\Session;
+use Magento\Framework\Stdlib\Cookie\PublicCookieMetadata;
 
 /**
  * Handles the payment method status request
@@ -42,15 +43,17 @@ class Status extends \Paymentsense\Payments\Controller\StatusAction
      * @param \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper
      * @param \Magento\Backend\Model\Session $backendSession
      * @param \Paymentsense\Payments\Model\Method\Direct $method
+     * @param PublicCookieMetadata|null $publicCookieMetadata
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
         \Paymentsense\Payments\Helper\DiagnosticMessage $messageHelper,
         Session $backendSession,
-        \Paymentsense\Payments\Model\Method\Direct $method
+        \Paymentsense\Payments\Model\Method\Direct $method,
+        PublicCookieMetadata $publicCookieMetadata
     ) {
-        parent::__construct($context, $logger, $messageHelper, $backendSession, $method);
+        parent::__construct($context, $logger, $messageHelper, $backendSession, $method, $publicCookieMetadata);
         $this->_messageHelper = $messageHelper;
         $this->_method        = $method;
     }
@@ -66,6 +69,7 @@ class Status extends \Paymentsense\Payments\Controller\StatusAction
         $arr = $this->_messageHelper->getStatusMessage($this->_method->isConfigured(), $this->_method->isSecure());
         $arr = array_merge($arr, $this->getConnectionMessage());
         $arr = array_merge($arr, $this->getSettingsMessage());
+        $arr = array_merge($arr, $this->getSameSiteCookieMessage());
         $arr = array_merge($arr, $this->getSystemTimeMessage());
         $this->getResponse()
             ->setHeader('Content-Type', 'application/json')

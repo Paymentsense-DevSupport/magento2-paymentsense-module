@@ -107,17 +107,24 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
         ];
         $postData = $this->getPostData();
         $this->_method->getLogger()->info('Callback request from the ACS has been received.');
-        $order = $this->getOrder();
+
+        $message = '';
+        $orderId = $this->getRequest()->getParam('OrderID');
+        $order   = $this->_method->getOrder($orderId);
         if (isset($order)) {
             $action = Action::THREEDSCOMPLETE;
             $transactionResult = $this->_method->process3dsResponse($order, $postData);
-            $this->getCheckoutSession()->setPaymentsense3dsResponseMessage($transactionResult['Message']);
+            $message = $transactionResult['Message'];
         } else {
             $action = Action::THREEDSERROR;
         }
         $link = $this->_method->getModuleHelper()->getUrlBuilder()->getUrl(
             'paymentsense/direct',
-            ['action' => $action]
+            [
+                'action'  => $action,
+                'OrderID' => $orderId,
+                'message' => $message
+            ]
         );
         $html='<html><head><script>window.top.location.href = "' . $link . '";</script></head></html>';
         $this->getResponse()->setBody($html);
@@ -135,13 +142,12 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
      */
     private function process3dsComplete()
     {
-        $message = $this->getCheckoutSession()->getPaymentsense3dsResponseMessage();
-        if ($message == '') {
-            $this->executeSuccessAction();
-        } else {
+        $message = $this->getRequest()->getParam('message');
+        if ($message) {
             $this->executeFailureAction($message);
+        } else {
+            $this->executeSuccessAction();
         }
-        $this->getCheckoutSession()->setPaymentsense3dsResponseMessage(null);
     }
 
     /**
@@ -153,7 +159,8 @@ class Index extends \Paymentsense\Payments\Controller\CheckoutAction
     private function process3dsError()
     {
         $message = "A 3-D Secure authentication error occurred while processing the order";
-        $order = $this->getOrder();
+        $orderId = $this->getRequest()->getParam('OrderID');
+        $order   = $this->_method->getOrder($orderId);
         if (isset($order)) {
             $this->_method->getModuleHelper()->setOrderState($order, TransactionResultCode::FAILED, $message);
         }

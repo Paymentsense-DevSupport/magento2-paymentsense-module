@@ -19,6 +19,7 @@
 
 namespace Paymentsense\Payments\Model\Traits;
 
+use Magento\Sales\Model\Order;
 use Paymentsense\Payments\Helper\Logger;
 
 /**
@@ -105,6 +106,53 @@ trait BaseMethod
         } catch (\Exception $e) {
             $result = false;
         }
+        return $result;
+    }
+
+    /**
+     * Gets Sales Order
+     *
+     * @param string|null $gatewayOrderId Gateway order ID
+     * @return \Magento\Sales\Model\Order $order
+     */
+    public function getOrder($gatewayOrderId)
+    {
+        $result         = null;
+        $orderId        = null;
+        $sessionOrderId = $this->getCheckoutSession()->getLastRealOrderId();
+        switch (true) {
+            case empty($gatewayOrderId):
+                $this->getLogger()->error('OrderID returned by the gateway is empty.');
+                break;
+            case empty($sessionOrderId):
+                $this->getLogger()->warning(
+                    'Session OrderID is empty. OrderID returned by the gateway (' . $gatewayOrderId .
+                    ') will be used.'
+                );
+                $orderId = $gatewayOrderId;
+                break;
+            case $sessionOrderId !== $gatewayOrderId:
+                $this->getLogger()->error(
+                    'Session OrderID (' . $sessionOrderId . ') differs from the OrderID (' . $gatewayOrderId .
+                    ') returned by the gateway.'
+                );
+                break;
+            default:
+                $orderId = $gatewayOrderId;
+                break;
+        }
+
+        if ($orderId) {
+            $objectManager = $this->getModuleHelper()->getObjectManager();
+            $orderObj      = $objectManager->create(Order::class);
+            $order         = $orderObj->loadByIncrementId($orderId);
+            if ($order) {
+                if ($order->getId()) {
+                    $result = $order;
+                }
+            }
+        }
+
         return $result;
     }
 }

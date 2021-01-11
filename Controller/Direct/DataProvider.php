@@ -52,10 +52,14 @@ class DataProvider extends \Paymentsense\Payments\Controller\CheckoutAction
      */
     public function execute()
     {
-        $termUrl= $this->_method->getModuleHelper()->getUrl(
+        $orderId = $this->getCheckoutSession()->getLastRealOrderId();
+        $termUrl = $this->_method->getModuleHelper()->getUrl(
             $this->_method->getCode(),
             'index',
-            ['action' => self::ACSRESPONSE]
+            [
+                'action'  => self::ACSRESPONSE,
+                'OrderID' => $orderId
+            ]
         );
         $data = $this->_method->buildAcsFormData($termUrl);
         $this->getResponse()

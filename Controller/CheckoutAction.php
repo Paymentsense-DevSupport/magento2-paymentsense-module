@@ -105,17 +105,6 @@ abstract class CheckoutAction extends CsrfAwareAction
     }
 
     /**
-     * Determines whether an order is cancelled
-     *
-     * @param \Magento\Sales\Model\Order $order
-     * @return bool
-     */
-    protected function isOrderCancelled($order)
-    {
-        return $order->getId() && ($order->getState() == Order::STATE_CANCELED);
-    }
-
-    /**
      * Cancels the current order and restores the quote
      *
      * @param string $comment

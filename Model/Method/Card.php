@@ -421,7 +421,6 @@ abstract class Card extends \Magento\Payment\Model\Method\Cc
                 $this->getCheckoutSession()->setPaymentsenseMD($response['CrossReference']);
             } else {
                 $this->getCheckoutSession()->setPaymentsenseAcsUrl(null);
-                $this->getCheckoutSession()->setPaymentsense3dsResponseMessage(null);
                 $this->getCheckoutSession()->setPaymentsensePaReq(null);
                 $this->getCheckoutSession()->setPaymentsenseMD(null);
                 if ($this->_canUseCheckout && ($status === TransactionResultCode::SUCCESS)) {

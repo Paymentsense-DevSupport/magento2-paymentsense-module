@@ -89,6 +89,11 @@ The usage of the **Paymentsense Direct** and **Paymentsense MOTO** involves the 
 Changelog
 ---------
 
+### 2.4.3
+##### Changed
+- Order confirmation page (Paymentsense Direct)
+
+
 ### 2.4.2
 ##### Changed
 - Filter for the characters not supported by the gateway
